@@ -1,0 +1,70 @@
+name: Security Report
+description: Parses SARIF report, appends summary with badge to job summary, upserts sticky PR comment, and uploads artifact
+
+inputs:
+  title:
+    description: Title displayed on top of the security report
+    required: false
+    default: Security Scan Report
+  sarif-file:
+    description: Path to the SARIF output file
+    required: true
+  comment-tag:
+    description: Identifier tag used to match and update sticky PR comments
+    required: false
+    default: security-report
+  badge-label:
+    description: Label text for the shields.io badge
+    required: false
+    default: Security
+  github-token:
+    description: GitHub token with pull-requests write permission
+    required: false
+    default: ${{ github.token }}
+  fail-on-findings:
+    description: Whether to fail the workflow if security findings are detected
+    required: false
+    default: "false"
+  upload-artifact:
+    description: Whether to upload the SARIF report as a workflow artifact
+    required: false
+    default: "true"
+  manage-issue:
+    description: Whether to create, update, or close an automated GitHub Issue
+    required: false
+    default: "false"
+  issue-title:
+    description: Title of the automated GitHub Issue
+    required: false
+    default: "[Security Audit] Active Vulnerabilities Detected"
+
+outputs:
+  total-findings:
+    description: "Total number of findings detected"
+    value: ${{ steps.generate_report.outputs.total-findings }}
+  report-file:
+    description: "Path to the generated Markdown report file"
+    value: ${{ steps.generate_report.outputs.report-file }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate and publish security report
+      id: generate_report
+      shell: bash
+      env:
+        INPUT_SARIF_FILE: ${{ inputs.sarif-file }}
+        INPUT_TITLE: ${{ inputs.title }}
+        INPUT_COMMENT_TAG: ${{ inputs.comment-tag }}
+        INPUT_GITHUB_TOKEN: ${{ inputs.github-token }}
+        INPUT_FAIL_ON_FINDINGS: ${{ inputs.fail-on-findings }}
+        INPUT_MANAGE_ISSUE: ${{ inputs.manage-issue }}
+        INPUT_ISSUE_TITLE: ${{ inputs.issue-title }}
+      run: node ${{ github.action_path }}/report.mjs
+
+    - name: Upload SARIF report artifact
+      if: always() && inputs.upload-artifact == 'true' && hashFiles(inputs.sarif-file) != ''
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: ${{ inputs.comment-tag }}-report
+        path: ${{ inputs.sarif-file }}

@@ -1,0 +1,47 @@
+name: Security Audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/security-audit.yml"
+      - ".github/actions/security-report/**"
+      - "code/frontend/package.json"
+      - "code/frontend/package-lock.json"
+      - "**/Dockerfile*"
+      - "**/*.dockerfile"
+  schedule:
+    - cron: "0 0 * * *" # Every day at 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  trivy-audit:
+    name: Trivy Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Trivy Vulnerability & Misconfig Scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.29.0
+        with:
+          scan-type: "fs"
+          format: "sarif"
+          output: "trivy.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM"
+
+      - name: Report Trivy Results
+        uses: ./.github/actions/security-report
+        if: always() && hashFiles('trivy.sarif') != ''
+        with:
+          title: "Trivy Vulnerability & Audit Report"
+          sarif-file: "trivy.sarif"
+          comment-tag: "trivy-audit"
+          manage-issue: ${{ github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+          fail-on-findings: "false"
+
