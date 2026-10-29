@@ -1,0 +1,22 @@
+name: Setup Node & npm deps
+description: Installs Node.js and restores npm dependencies for the frontend
+
+inputs:
+  node-version:
+    description: Node.js version
+    default: '22'
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: ${{ inputs.node-version }}
+        cache: npm
+        cache-dependency-path: code/frontend/package-lock.json
+
+    - name: Install deps
+      shell: bash
+      working-directory: code/frontend
+      run: npm ci
+
