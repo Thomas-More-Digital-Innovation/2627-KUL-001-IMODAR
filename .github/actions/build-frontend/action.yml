@@ -1,0 +1,11 @@
+name: Build Frontend
+description: Builds the frontend production bundle
+
+runs:
+  using: composite
+  steps:
+    - name: Build frontend
+      shell: bash
+      working-directory: code/frontend
+      run: npm run build
+

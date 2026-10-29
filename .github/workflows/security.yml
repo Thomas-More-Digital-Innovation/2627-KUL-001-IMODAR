@@ -1,0 +1,53 @@
+name: Security CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**/*.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  gitleaks:
+    name: Gitleaks (Secret Detection)
+    runs-on: ubuntu-latest
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  semgrep:
+    name: Semgrep (SAST)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run Semgrep OSS
+        run: |
+          docker run --rm -v "${{ github.workspace }}:/src" semgrep/semgrep \
+            semgrep scan --config auto --sarif-output=/src/semgrep.sarif
+
+      - name: Report Semgrep Results
+        uses: ./.github/actions/security-report
+        if: always() && hashFiles('semgrep.sarif') != ''
+        with:
+          title: "Semgrep SAST"
+          sarif-file: "semgrep.sarif"
+          comment-tag: "semgrep"
+          badge-label: "Semgrep SAST"
+          fail-on-findings: "false"
+

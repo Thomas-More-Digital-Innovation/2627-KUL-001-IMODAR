@@ -1,14 +1,44 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/code/frontend"
-    schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-
+  # GitHub Actions (auto-bump pinned commit SHAs)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "thursday"
+      time: "04:00"
+      timezone: "UTC"
     open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "ci"
+    groups:
+      actions:
+        patterns:
+          - "*"
 
+  # Frontend (npm dependencies)
+  - package-ecosystem: "npm"
+    directory: "/code/frontend"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      vue:
+        patterns:
+          - "vue*"
+          - "@vue/*"
+          - "@vitejs/*"
+      tooling:
+        patterns:
+          - "typescript*"
+          - "vue-tsc*"
+          - "vite*"
