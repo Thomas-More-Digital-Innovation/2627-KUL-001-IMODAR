@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { signIn } from './sign-in';
 import type { AnalysisResponse } from '../src/lib/api/client';
 
 const answer: AnalysisResponse = {
@@ -23,6 +24,8 @@ const answer: AnalysisResponse = {
     attempts: 1,
   },
 };
+
+test.beforeEach(({ page }) => signIn(page));
 
 test('asks a question, audits it and downloads the rows', async ({ page }) => {
   await page.route('**/api/analyses', (route) => route.fulfill({ json: answer }));

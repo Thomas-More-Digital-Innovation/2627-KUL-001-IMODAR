@@ -1,39 +1,123 @@
 <script lang="ts">
-  let submitted = $state(false);
+  import { auth } from '#lib/api/auth.ts';
+  import { messageOf } from '#lib/api/http.ts';
+  import SignInCode from '#lib/components/SignInCode.svelte';
+
+  let step = $state<'password' | 'verify' | 'enrol' | 'codes'>('password');
+  let email = $state('');
+  let password = $state('');
+  let remember = $state(false);
+  let code = $state('');
+  let enrolment = $state({ secret: '', qr_code: '' });
+  let recoveryCodes = $state<string[]>([]);
+  let busy = $state(false);
+  let error = $state('');
+
+  const subtitle = $derived(
+    {
+      password: 'Sign in to your workspace',
+      verify: 'Two-factor authentication',
+      enrol: 'Set up two-factor authentication',
+      codes: 'Save your recovery codes',
+    }[step],
+  );
+
+  function enterWorkspace() {
+    // A full load guarantees no state from a previous user survives in memory.
+    window.location.assign('/');
+  }
+
+  async function advance() {
+    if (step === 'password') {
+      const { next } = await auth.login({ email, password, remember });
+      password = '';
+      if (next === 'enrol') enrolment = await auth.enrol();
+      step = next;
+    } else if (step === 'verify') {
+      await auth.verify(code);
+      enterWorkspace();
+    } else if (step === 'enrol') {
+      recoveryCodes = (await auth.confirm(code)).recovery_codes;
+      step = 'codes';
+    } else {
+      enterWorkspace();
+    }
+  }
+
+  async function submit(event: SubmitEvent) {
+    event.preventDefault();
+    busy = true;
+    error = '';
+    try {
+      await advance();
+    } catch (cause) {
+      error = messageOf(cause);
+    } finally {
+      code = '';
+      busy = false;
+    }
+  }
+
+  function restart() {
+    step = 'password';
+    error = '';
+  }
 </script>
 
 <svelte:head><title>Sign in · IMODAR</title></svelte:head>
 <main>
   <div class="art"><img src="/images/dna.png" alt="" /><span class="logo">IMODAR</span></div>
-  <form
-    onsubmit={(event) => {
-      event.preventDefault();
-      submitted = true;
-    }}
-  >
+  <form onsubmit={submit}>
     <h1>IMODAR</h1>
-    <p class="subtitle">Sign in to your workspace</p>
-    <label class="field">
-      Email address<input
-        type="email"
-        autocomplete="username"
-        placeholder="example@example.com"
-        required
-      />
-    </label>
-    <label class="field">
-      Password<input type="password" autocomplete="current-password" required />
-    </label>
-    <div class="options">
-      <label><input type="checkbox" /> Remember me</label>
-      <button type="button" class="link" disabled>Forgot password?</button>
-    </div>
-    <button class="submit">Sign in <img src="/images/arrow.svg" alt="" /></button>
-    {#if submitted}
-      <!-- TODO: replace with a real session once the backend provides authentication. -->
-      <p class="notice" role="status">
-        Sign-in is not connected yet. <a class="link" href="/">Continue to workspace</a>
+    <p class="subtitle">{subtitle}</p>
+    {#if step === 'password'}
+      <label class="field">
+        Email address
+        <input
+          type="email"
+          autocomplete="username"
+          placeholder="example@example.com"
+          required
+          bind:value={email}
+        />
+      </label>
+      <label class="field">
+        Password
+        <input
+          type="password"
+          autocomplete="current-password"
+          maxlength="128"
+          required
+          bind:value={password}
+        />
+      </label>
+      <div class="options">
+        <label><input type="checkbox" bind:checked={remember} /> Remember me</label>
+        <!-- TODO: enable once password reset emails exist. -->
+        <button type="button" class="link" disabled>Forgot password?</button>
+      </div>
+    {:else if step === 'verify'}
+      <SignInCode label="Authenticator or recovery code" bind:code />
+    {:else if step === 'enrol'}
+      <p class="enrol">Scan this with your authenticator app, then enter the code it shows.</p>
+      <img class="qr" src={enrolment.qr_code} alt="QR code for your authenticator app" />
+      <p class="enrol">Or enter this key: <code>{enrolment.secret}</code></p>
+      <SignInCode label="Authenticator code" bind:code />
+    {:else}
+      <p class="enrol">
+        Each code replaces your authenticator once. Store them safely; they are not shown again.
       </p>
+      <ul class="codes">
+        {#each recoveryCodes as item (item)}<li><code>{item}</code></li>{/each}
+      </ul>
+    {/if}
+    {#if error}<p class="notice" role="alert">{error}</p>{/if}
+    <button class="submit" disabled={busy}>
+      {step === 'password' ? 'Sign in' : step === 'codes' ? 'I saved these codes' : 'Verify'}
+      <img src="/images/arrow.svg" alt="" />
+    </button>
+    {#if step === 'verify' || step === 'enrol'}
+      <button type="button" class="link" onclick={restart}>Start again</button>
     {/if}
   </form>
 </main>
@@ -113,6 +197,28 @@
     color: #fff;
     font-size: 22px;
     box-shadow: 0 10px 20px #087f9133;
+  }
+  .enrol {
+    font-size: 16px;
+    line-height: 24px;
+  }
+  .qr {
+    width: 220px;
+    margin: 0 auto;
+    background: #fff;
+  }
+  code {
+    overflow-wrap: anywhere;
+  }
+  .codes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 0;
+    padding: 20px;
+    border-radius: 12px;
+    background: #fff;
+    list-style: none;
   }
   @media (max-width: 800px) {
     main {

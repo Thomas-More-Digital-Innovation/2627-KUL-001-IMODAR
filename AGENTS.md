@@ -18,7 +18,7 @@ All AI agents assisting in this repository must strictly adhere to the rules bel
 
 ## 2. Documentation Pointers
 
-* **Setup & commands:** [`README.md`](./README.md)
+* **Setup & commands:** [`README.md`](./README.md) and [`justfile`](./justfile); prefer `just` recipes over raw commands
 * **API contract:** [`code/backend/imodar/api/contracts.py`](./code/backend/imodar/api/contracts.py)
 * **Design tokens:** [`code/frontend/src/app.css`](./code/frontend/src/app.css)
 
@@ -38,9 +38,12 @@ All AI agents assisting in this repository must strictly adhere to the rules bel
 * **LLM boundary:** The model plans and phrases only; it never supplies data. All model-generated SQL must pass `guard.validate` before `Warehouse.execute`.
 * **Read-only warehouse:** Keep DuckDB read-only, with external access disabled and configuration locked.
 * **Layers:** `imodar/api` holds HTTP concerns and depends on the pipeline. Pipeline modules never import from `imodar/api`.
+* **Two databases:** Postgres, through SQLAlchemy 2 (`imodar/db`), holds application data only: users, access, history. Study data stays in the DuckDB warehouse. Never mix them, and never expose Postgres to the planner or guard.
+* **Migrations:** Every model change ships with an Alembic migration. Never use `create_all`, and never edit a migration that has been merged.
+* **Authentication:** Every endpoint outside `/api/auth` and `/api/health` depends on `require_user`; admin endpoints also check the role. Only sessions that passed the second factor grant access. Never log passwords, codes, tokens, or TOTP secrets.
 * **Contracts:** Use `…Request`/`…Response` for top-level bodies and plain nouns for nested types. Type closed value sets as `Literal` or enums.
 * **Errors:** Never return internal hosts, paths, or stack traces to clients.
-* **Testing:** Pytest is required for new logic. Stub Ollama and Qdrant; never require the real warehouse.
+* **Testing:** Pytest is required for new logic. Stub Ollama and Qdrant; never require the real warehouse. Database tests run on Postgres through `TEST_DATABASE_URL`, never on SQLite.
 
 ---
 
@@ -60,4 +63,4 @@ All AI agents assisting in this repository must strictly adhere to the rules bel
 
 ## 6. Quality Guard
 
-Run the checks in [`README.md`](./README.md) for every area you changed. CI also runs Gitleaks, Semgrep, and Trivy.
+Run `just check` before handing over. CI also runs Gitleaks, Semgrep, and Trivy.

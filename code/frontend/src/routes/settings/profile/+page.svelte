@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import DemoNotice from '#lib/components/DemoNotice.svelte';
+  const user = $derived(page.data.user);
 </script>
 
-<DemoNotice />
+<DemoNotice>Profile editing is not connected yet.</DemoNotice>
 <section class="card">
   <header>
     <h1>Profile information</h1>
@@ -16,10 +18,12 @@
         <p>JPG or PNG, up to 2 MB.</p>
       </div>
     </div>
-    <label class="field">Full name<input value="Researcher" autocomplete="name" /></label>
-    <label class="field">Role<input value="Clinical Researcher" /></label>
+    <label class="field">
+      Full name<input value={user?.full_name} autocomplete="name" readonly />
+    </label>
+    <label class="field">Role<input value={user?.role} readonly /></label>
     <label class="field wide">
-      Email address<input type="email" value="researcher@imodar.com" autocomplete="email" />
+      Email address<input type="email" value={user?.email} autocomplete="email" readonly />
     </label>
     <button class="btn primary" disabled>Save changes</button>
   </form>

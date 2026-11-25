@@ -1,16 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { signIn } from './sign-in';
 
-test('login states that sign-in is not connected', async ({ page }) => {
-  await page.goto('/login');
-  await page.getByLabel('Email address').fill('a@example.com');
-  await page.getByLabel('Password').fill('not-a-real-password');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('status')).toContainText('not connected');
-});
+test.beforeEach(({ page }) => signIn(page));
 
 test('user menu leads to settings', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: /Researcher/ }).click();
+  await page.getByRole('button', { name: /Ada/ }).click();
   await page.getByRole('link', { name: 'Settings' }).click();
   await expect(page.getByRole('heading', { name: 'Profile information' })).toBeVisible();
   await page.getByRole('link', { name: 'Security' }).click();
@@ -38,4 +33,31 @@ test('admin confirms bulk deletion and reaches resource access', async ({ page }
   await dialog.getByRole('button', { name: 'Cancel' }).click();
   await page.getByRole('link', { name: 'Resource access' }).click();
   await expect(page.getByRole('heading', { name: 'Users & Resources access' })).toBeVisible();
+});
+
+test('researchers cannot open the dashboard', async ({ page }) => {
+  await signIn(page, 'researcher');
+  await page.goto('/admin/users');
+  await expect(page).toHaveURL('/');
+  await page.getByRole('button', { name: /Ada/ }).click();
+  await expect(page.getByRole('link', { name: 'Settings' })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Dashboard' })).toBeHidden();
+});
+
+test('password confirmation must match before anything is sent', async ({ page }) => {
+  let sent = false;
+  await page.route('**/api/auth/password', (route) => {
+    sent = true;
+    return route.fulfill({ status: 204 });
+  });
+  await page.goto('/settings/security');
+  await page.getByLabel('Current password').fill('synthetic-current');
+  await page.getByLabel('New password').fill('synthetic-new-password');
+  await page.getByLabel('Confirm password').fill('something-else');
+  await page.getByRole('button', { name: 'Update password' }).click();
+  await expect(page.getByRole('alert')).toContainText('do not match');
+  expect(sent).toBe(false);
+  await page.getByLabel('Confirm password').fill('synthetic-new-password');
+  await page.getByRole('button', { name: 'Update password' }).click();
+  await expect(page.getByRole('status')).toContainText('Password updated');
 });

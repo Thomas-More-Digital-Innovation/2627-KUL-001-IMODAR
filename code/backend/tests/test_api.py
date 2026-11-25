@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from imodar.api.auth import require_user
 from imodar.api.main import app, get_pipeline, get_warehouse
 from imodar.concepts import ConceptHit, Resolution
 from imodar.guard import validate
@@ -38,6 +39,7 @@ class StubPipeline:
 @pytest.fixture
 def client(warehouse):
     app.dependency_overrides[get_warehouse] = lambda: warehouse
+    app.dependency_overrides[require_user] = lambda: None
     app.dependency_overrides[get_pipeline] = lambda: StubPipeline(warehouse)
     yield TestClient(app)
     app.dependency_overrides.clear()
