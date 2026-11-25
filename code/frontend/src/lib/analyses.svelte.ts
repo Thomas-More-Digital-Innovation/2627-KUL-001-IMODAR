@@ -13,6 +13,7 @@ export class Analyses {
   activeId = $state<number | null>(null);
   pending = $state<string | null>(null);
   think = $state(false);
+  graphs = $state(false);
   error = $state<string | null>(null);
   active = $derived(this.items.find((item) => item.id === this.activeId) ?? null);
   #nextId = 1;
@@ -34,7 +35,7 @@ export class Analyses {
     this.pending = question;
     this.error = null;
     try {
-      const result = await this.#run({ question, think: this.think });
+      const result = await this.#run({ question, think: this.think, graphs: this.graphs });
       if (this.active) {
         this.active.results.push(result);
       } else {

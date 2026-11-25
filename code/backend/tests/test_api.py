@@ -9,6 +9,8 @@ from imodar.api.main import app, get_pipeline, get_warehouse
 from imodar.concepts import ConceptHit, Resolution
 from imodar.guard import validate
 from imodar.pipeline import PipelineResult
+from imodar.plot_planner import Graph, GraphResult
+from imodar.plots import PlotSpec
 
 SQL = "SELECT person_id, age_years FROM omop.person ORDER BY person_id"
 
@@ -17,8 +19,9 @@ class StubPipeline:
     def __init__(self, warehouse):
         self.warehouse = warehouse
 
-    def run(self, question, think=None):
+    def run(self, question, think=None, graphs=False):
         self.think = think
+        self.graphs = graphs
         if question == "offline":
             raise RuntimeError("http://internal-host refused")
         ok = question != "clarify"
@@ -34,6 +37,7 @@ class StubPipeline:
             exec_result=self.warehouse.execute(report.sql) if ok else None,
             synthesis="Two people.",
             total_elapsed_ms=1,
+            graphs=GraphResult([Graph(PlotSpec("bar"), "cG5n")], [(PlotSpec("pie"), "unknown")]) if graphs else None,
         )
 
 
@@ -72,6 +76,13 @@ def test_thinking_mode_reaches_the_pipeline(client, warehouse, body, expected):
     app.dependency_overrides[get_pipeline] = lambda: pipeline
     client.post("/api/analyses", json={"question": "ages", **body})
     assert pipeline.think is expected
+
+
+def test_graphs_are_returned_only_on_request(client):
+    assert ask(client, "ages").json()["graphs"] is None
+    graphs = client.post("/api/analyses", json={"question": "ages", "graphs": True}).json()["graphs"]
+    assert graphs["items"][0]["png_base64"] == "cG5n"
+    assert graphs["rejected"] == [{"type": "pie", "title": "pie", "reason": "unknown"}]
 
 
 def test_clarification_has_no_table(client):

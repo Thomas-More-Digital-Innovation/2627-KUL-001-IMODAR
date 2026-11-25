@@ -3,6 +3,7 @@
   import Notice from '#lib/components/Notice.svelte';
   import ResultCard from '#lib/components/ResultCard.svelte';
   import Sidebar from '#lib/components/Sidebar.svelte';
+  import ToggleButton from '#lib/components/ToggleButton.svelte';
   let question = $state('');
 
   async function submit(event?: Event) {
@@ -46,16 +47,20 @@
         onkeydown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) void submit(event);
         }}></textarea>
-      <button
-        type="button"
-        class="rounded-xl border border-field px-3.5 text-body aria-pressed:border-brand aria-pressed:bg-tint aria-pressed:text-brand"
-        aria-pressed={analyses.think}
+      <ToggleButton
+        bind:pressed={analyses.think}
         title="Slower, but better on hard questions"
         disabled={!!analyses.pending}
-        onclick={() => (analyses.think = !analyses.think)}
       >
         Thinking
-      </button>
+      </ToggleButton>
+      <ToggleButton
+        bind:pressed={analyses.graphs}
+        title="Also draw graphs; takes longer"
+        disabled={!!analyses.pending}
+      >
+        Graphs
+      </ToggleButton>
       <button
         class="grid size-11 place-items-center rounded-xl bg-action"
         aria-label="Submit question"

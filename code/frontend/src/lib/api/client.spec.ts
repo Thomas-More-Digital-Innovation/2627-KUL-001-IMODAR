@@ -4,10 +4,13 @@ import { createAnalysis } from './client';
 describe('createAnalysis', () => {
   it('posts the question', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({ status: 'ok' }));
-    await createAnalysis({ question: 'How many?', think: true }, fetcher);
+    await createAnalysis({ question: 'How many?', think: true, graphs: true }, fetcher);
     expect(fetcher).toHaveBeenCalledWith(
       '/api/analyses',
-      expect.objectContaining({ method: 'POST', body: '{"question":"How many?","think":true}' }),
+      expect.objectContaining({
+        method: 'POST',
+        body: '{"question":"How many?","think":true,"graphs":true}',
+      }),
     );
   });
 
@@ -17,6 +20,8 @@ describe('createAnalysis', () => {
     [new Response('<html>', { status: 500 }), 'could not be completed'],
   ])('reports failures', async (response, message) => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(response);
-    await expect(createAnalysis({ question: 'x' }, fetcher)).rejects.toThrow(message);
+    await expect(createAnalysis({ question: 'x', graphs: false }, fetcher)).rejects.toThrow(
+      message,
+    );
   });
 });

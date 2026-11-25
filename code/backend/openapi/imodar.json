@@ -366,6 +366,12 @@
             ],
             "title": "Think",
             "description": "Model thinking mode; null uses the server default."
+          },
+          "graphs": {
+            "type": "boolean",
+            "title": "Graphs",
+            "description": "Also let the model choose graphs for the result.",
+            "default": false
           }
         },
         "type": "object",
@@ -407,6 +413,17 @@
               }
             ]
           },
+          "graphs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GraphReport"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when graphs were not requested or there is no result."
+          },
           "audit": {
             "$ref": "#/components/schemas/AuditTrail"
           }
@@ -418,6 +435,7 @@
           "summary",
           "elapsed_ms",
           "table",
+          "graphs",
           "audit"
         ],
         "title": "AnalysisResponse"
@@ -546,6 +564,70 @@
         ],
         "title": "EnrolmentResponse"
       },
+      "Graph": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "rationale": {
+            "type": "string",
+            "title": "Rationale"
+          },
+          "png_base64": {
+            "type": "string",
+            "title": "Png Base64"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "rationale",
+          "png_base64"
+        ],
+        "title": "Graph"
+      },
+      "GraphReport": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Graph"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "rejected": {
+            "items": {
+              "$ref": "#/components/schemas/RejectedGraph"
+            },
+            "type": "array",
+            "title": "Rejected"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "rejected",
+          "error"
+        ],
+        "title": "GraphReport"
+      },
       "GuardCheck": {
         "properties": {
           "name": {
@@ -653,6 +735,29 @@
           "recovery_codes"
         ],
         "title": "RecoveryCodesResponse"
+      },
+      "RejectedGraph": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "reason"
+        ],
+        "title": "RejectedGraph"
       },
       "ResolvedEntity": {
         "properties": {

@@ -21,6 +21,7 @@ class Study(BaseModel):
 class AnalysisRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
     think: bool | None = Field(default=None, description="Model thinking mode; null uses the server default.")
+    graphs: bool = Field(default=False, description="Also let the model choose graphs for the result.")
 
 
 class ResultTable(BaseModel):
@@ -56,12 +57,32 @@ class AuditTrail(BaseModel):
     attempts: int
 
 
+class Graph(BaseModel):
+    type: str
+    title: str
+    rationale: str
+    png_base64: str
+
+
+class RejectedGraph(BaseModel):
+    type: str
+    title: str
+    reason: str
+
+
+class GraphReport(BaseModel):
+    items: list[Graph]
+    rejected: list[RejectedGraph]
+    error: str | None
+
+
 class AnalysisResponse(BaseModel):
     question: str
     status: Literal["ok", "clarify", "error"]
     summary: str
     elapsed_ms: float
     table: ResultTable | None
+    graphs: GraphReport | None = Field(description="Null when graphs were not requested or there is no result.")
     audit: AuditTrail
 
 

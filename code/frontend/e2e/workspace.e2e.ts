@@ -15,6 +15,7 @@ const answer: AnalysisResponse = {
     truncated: false,
     elapsed_ms: 2,
   },
+  graphs: null,
   audit: {
     reasoning: 'Average per cohort',
     data_sources: ['omop.measurement'],
@@ -72,6 +73,32 @@ test('renders markdown without trusting it and sends thinking mode', async ({ pa
   await expect(summary.locator('img, a')).toHaveCount(0);
   await expect(summary).toContainText('<img src=x');
   expect(think).toBe(true);
+});
+
+test('requests graphs and shows them with rejected suggestions', async ({ page }) => {
+  const pixel =
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+  let graphs: unknown;
+  await page.route('**/api/analyses', (route) => {
+    graphs = route.request().postDataJSON().graphs;
+    const report = {
+      items: [{ type: 'bar', title: 'CRP', rationale: 'Compares groups', png_base64: pixel }],
+      rejected: [{ type: 'hist', title: 'Other', reason: 'needs numeric x' }],
+      error: null,
+    };
+    return route.fulfill({ json: { ...answer, graphs: report } });
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Graphs' }).click();
+  await page.getByLabel('Ask a question').fill('Compare CRP');
+  await page.getByRole('button', { name: 'Submit question' }).click();
+  await expect(page.getByRole('img', { name: 'CRP. Compares groups' })).toBeVisible();
+  expect(graphs).toBe(true);
+  await page.getByText('Rejected suggestions').click();
+  await expect(page.getByText('needs numeric x')).toBeVisible();
+  const download = page.waitForEvent('download');
+  await page.getByRole('link', { name: 'Download PNG' }).click();
+  expect((await download).suggestedFilename()).toBe('graph-1.png');
 });
 
 test('keeps the question when the API is unavailable', async ({ page }) => {

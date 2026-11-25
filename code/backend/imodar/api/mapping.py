@@ -4,7 +4,16 @@ import json
 
 from ..engine import ExecResult
 from ..pipeline import PipelineResult
-from .contracts import AnalysisResponse, AuditTrail, GuardCheck, ResolvedEntity, ResultTable
+from .contracts import (
+    AnalysisResponse,
+    AuditTrail,
+    Graph,
+    GraphReport,
+    GuardCheck,
+    RejectedGraph,
+    ResolvedEntity,
+    ResultTable,
+)
 
 
 def _table(result: ExecResult | None) -> ResultTable | None:
@@ -51,6 +60,27 @@ def _entities(result: PipelineResult) -> list[ResolvedEntity]:
     return entities
 
 
+def _graphs(result: PipelineResult) -> GraphReport | None:
+    if result.graphs is None:
+        return None
+    return GraphReport(
+        items=[
+            Graph(
+                type=graph.spec.type,
+                title=graph.spec.title or graph.spec.type,
+                rationale=graph.spec.rationale,
+                png_base64=graph.png_base64,
+            )
+            for graph in result.graphs.graphs
+        ],
+        rejected=[
+            RejectedGraph(type=spec.type, title=spec.title or spec.type, reason=reason)
+            for spec, reason in result.graphs.rejected
+        ],
+        error=result.graphs.error,
+    )
+
+
 def to_response(result: PipelineResult) -> AnalysisResponse:
     """Expose a pipeline result together with everything needed to audit it."""
     checks = result.guard_report.checks if result.guard_report else []
@@ -60,6 +90,7 @@ def to_response(result: PipelineResult) -> AnalysisResponse:
         summary=result.synthesis,
         elapsed_ms=result.total_elapsed_ms,
         table=_table(result.exec_result),
+        graphs=_graphs(result),
         audit=AuditTrail(
             reasoning=result.plan_reasoning,
             data_sources=result.data_sources,

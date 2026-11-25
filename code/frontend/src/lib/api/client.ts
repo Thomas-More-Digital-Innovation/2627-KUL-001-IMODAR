@@ -3,6 +3,7 @@ import type { components } from './schema';
 
 type Schemas = components['schemas'];
 export type AnalysisResponse = Schemas['AnalysisResponse'];
+export type GraphReport = Schemas['GraphReport'];
 export type ResultTable = Schemas['ResultTable'];
 
 /** Runs a question through the audited analysis pipeline. */

@@ -237,6 +237,12 @@ export interface components {
              * @description Model thinking mode; null uses the server default.
              */
             think?: boolean | null;
+            /**
+             * Graphs
+             * @description Also let the model choose graphs for the result.
+             * @default false
+             */
+            graphs: boolean;
         };
         /** AnalysisResponse */
         AnalysisResponse: {
@@ -252,6 +258,8 @@ export interface components {
             /** Elapsed Ms */
             elapsed_ms: number;
             table: components["schemas"]["ResultTable"] | null;
+            /** @description Null when graphs were not requested or there is no result. */
+            graphs: components["schemas"]["GraphReport"] | null;
             audit: components["schemas"]["AuditTrail"];
         };
         /** AuditTrail */
@@ -295,6 +303,26 @@ export interface components {
             secret: string;
             /** Qr Code */
             qr_code: string;
+        };
+        /** Graph */
+        Graph: {
+            /** Type */
+            type: string;
+            /** Title */
+            title: string;
+            /** Rationale */
+            rationale: string;
+            /** Png Base64 */
+            png_base64: string;
+        };
+        /** GraphReport */
+        GraphReport: {
+            /** Items */
+            items: components["schemas"]["Graph"][];
+            /** Rejected */
+            rejected: components["schemas"]["RejectedGraph"][];
+            /** Error */
+            error: string | null;
         };
         /** GuardCheck */
         GuardCheck: {
@@ -342,6 +370,15 @@ export interface components {
         RecoveryCodesResponse: {
             /** Recovery Codes */
             recovery_codes: string[];
+        };
+        /** RejectedGraph */
+        RejectedGraph: {
+            /** Type */
+            type: string;
+            /** Title */
+            title: string;
+            /** Reason */
+            reason: string;
         };
         /** ResolvedEntity */
         ResolvedEntity: {

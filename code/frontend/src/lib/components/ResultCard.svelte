@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { AnalysisResponse } from '#lib/api/client.ts';
   import Card from './Card.svelte';
+  import Graphs from './Graphs.svelte';
   import Markdown from './Markdown.svelte';
   import { downloadCsv } from '#lib/csv.ts';
   let { result }: { result: AnalysisResponse } = $props();
@@ -74,6 +75,12 @@
       >
         <img src="/images/download.svg" alt="" /> Download CSV
       </button>
+    {/if}
+    {#if result.graphs}
+      <Graphs
+        report={result.graphs}
+        truncatedTo={result.table?.truncated ? result.table.rows.length : null}
+      />
     {/if}
     <details class="mt-[25px]">
       <summary class="cursor-pointer text-brand">Audit trail</summary>

@@ -10,6 +10,7 @@ from .engine import ExecResult, Warehouse
 from .guard import GuardReport
 from .llm import OllamaClient
 from .planner import PlanAttempt, PlanResult, QueryPlanner
+from .plot_planner import GraphResult, create_graphs
 from .synthesizer import Synthesizer
 
 
@@ -27,6 +28,7 @@ class PipelineResult:
     total_elapsed_ms: float
     attempts: list[PlanAttempt] = field(default_factory=list)
     error_message: str | None = None
+    graphs: GraphResult | None = None
 
 
 class Pipeline:
@@ -42,7 +44,9 @@ class Pipeline:
         self.planner = QueryPlanner(self.wh, self.llm, self.concept_index)
         self.synthesizer = Synthesizer(self.llm)
 
-    def run(self, question: str, synthesize_prose: bool = True, think: bool | None = None) -> PipelineResult:
+    def run(
+        self, question: str, synthesize_prose: bool = True, think: bool | None = None, graphs: bool = False
+    ) -> PipelineResult:
         t0 = time.perf_counter()
 
         # Run planner (which includes semantic resolution, guardrail validation, and execution)
@@ -93,6 +97,10 @@ class Pipeline:
                 think=think,
             )
 
+        graph_result = None
+        if graphs and plan.exec_result.df is not None:
+            graph_result = create_graphs(self.llm, question, plan.exec_result.df, plan.sql)
+
         total_elapsed = (time.perf_counter() - t0) * 1000
 
         return PipelineResult(
@@ -105,6 +113,7 @@ class Pipeline:
             guard_report=plan.guard_report,
             exec_result=plan.exec_result,
             synthesis=synthesis_text,
+            graphs=graph_result,
             total_elapsed_ms=total_elapsed,
             attempts=plan.attempts,
         )

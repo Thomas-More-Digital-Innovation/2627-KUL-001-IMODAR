@@ -21,12 +21,16 @@ describe('Analyses', () => {
     expect(store.items.map((item) => item.title)).toEqual(['second', 'first']);
   });
 
-  it('sends the thinking choice with each question', async () => {
+  it('sends the thinking and graph choices with each question', async () => {
     const { run, store } = setup();
     await store.ask('a');
     store.think = true;
+    store.graphs = true;
     await store.ask('b');
-    expect(run.mock.calls.map(([body]) => body.think)).toEqual([false, true]);
+    expect(run.mock.calls.map(([body]) => [body.think, body.graphs])).toEqual([
+      [false, false],
+      [true, true],
+    ]);
   });
 
   it('keeps state unchanged on failure', async () => {

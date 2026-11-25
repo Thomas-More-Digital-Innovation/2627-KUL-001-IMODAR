@@ -94,7 +94,7 @@ def create_analysis(request: AnalysisRequest, pipeline: Annotated[Pipeline, Depe
     if not question:
         raise HTTPException(422, "The question must not be blank.")
     try:
-        return to_response(pipeline.run(question, think=request.think))
+        return to_response(pipeline.run(question, think=request.think, graphs=request.graphs))
     except RuntimeError as error:
         logger.exception("Analysis dependency failed")
         raise HTTPException(503, "The analysis service is unavailable.") from error
