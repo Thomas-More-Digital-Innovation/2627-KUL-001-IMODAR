@@ -8,6 +8,7 @@ Ask clinical questions across heterogeneous studies. A local LLM plans SQL, an A
 
 - `code/backend`: FastAPI and the query pipeline (Python, uv)
 - `code/frontend`: SvelteKit application (Node 24, npm)
+- `k8s`: Argo CD deployment, see [`k8s/README.md`](./k8s/README.md)
 
 ## Run
 

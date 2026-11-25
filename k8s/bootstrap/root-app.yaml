@@ -1,0 +1,19 @@
+# App-of-apps. Applied once by hand; everything else comes from k8s/argocd.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: imodar-root
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Thomas-More-Digital-Innovation/2627-KUL-001-IMODAR.git
+    targetRevision: main
+    path: k8s/argocd
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

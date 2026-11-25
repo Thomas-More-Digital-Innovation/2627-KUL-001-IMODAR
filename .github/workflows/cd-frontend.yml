@@ -1,0 +1,28 @@
+name: Frontend CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "code/frontend/**"
+      - ".github/workflows/cd-frontend.yml"
+      - ".github/workflows/cd-image.yml"
+      - "!code/frontend/**/*.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-frontend
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Frontend
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/cd-image.yml
+    with:
+      component: frontend

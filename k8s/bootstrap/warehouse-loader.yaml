@@ -1,0 +1,38 @@
+# Temporary pod for copying the warehouse in; the backend mounts it read-only.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: warehouse-loader
+  namespace: imodar
+spec:
+  automountServiceAccountToken: false
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+    seccompProfile:
+      type: RuntimeDefault
+  affinity:
+    # The volume is ReadWriteOnce, so this must run on the backend's node.
+    podAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app: backend
+  containers:
+    - name: loader
+      image: busybox:1.37
+      command: ["sleep", "86400"]
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: warehouse
+          mountPath: /warehouse
+  volumes:
+    - name: warehouse
+      persistentVolumeClaim:
+        claimName: warehouse

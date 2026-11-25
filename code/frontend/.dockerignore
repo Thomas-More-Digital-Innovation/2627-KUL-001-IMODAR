@@ -1,0 +1,9 @@
+node_modules
+.svelte-kit
+build
+e2e
+test-results
+playwright-report
+**/.env*
+Dockerfile
+.dockerignore

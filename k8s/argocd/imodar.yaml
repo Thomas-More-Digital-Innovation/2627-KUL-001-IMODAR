@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: imodar
+  namespace: argocd
+spec:
+  project: imodar
+  source:
+    repoURL: https://github.com/Thomas-More-Digital-Innovation/2627-KUL-001-IMODAR.git
+    targetRevision: main
+    path: k8s/app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: imodar
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
