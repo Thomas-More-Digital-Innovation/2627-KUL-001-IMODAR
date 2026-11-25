@@ -1,68 +1,31 @@
 <script lang="ts">
   import { page } from '$app/state';
+  import Button from '#lib/components/Button.svelte';
+  import Card from '#lib/components/Card.svelte';
   import DemoNotice from '#lib/components/DemoNotice.svelte';
+  import Field from '#lib/components/Field.svelte';
   const user = $derived(page.data.user);
 </script>
 
 <DemoNotice>Profile editing is not connected yet.</DemoNotice>
-<section class="card">
-  <header>
-    <h1>Profile information</h1>
-    <p>Update how you appear across the workspace.</p>
+<Card class="mt-4 rounded-2xl shadow-[0_1px_3px_#0000001a]">
+  <header class="border-b border-[#e5eded] p-6">
+    <h1 class="text-[18px]">Profile information</h1>
+    <p class="mt-1.5 text-muted">Update how you appear across the workspace.</p>
   </header>
-  <form onsubmit={(event) => event.preventDefault()}>
-    <div class="photo wide">
-      <img src="/images/avatar-lg.svg" alt="" />
+  <form class="grid grid-cols-2 gap-5 p-6" onsubmit={(event) => event.preventDefault()}>
+    <div class="col-span-full flex gap-4">
+      <img class="rounded-full" src="/images/avatar-lg.svg" alt="" />
       <div>
-        <button type="button" class="btn" disabled>Change photo</button>
-        <p>JPG or PNG, up to 2 MB.</p>
+        <Button type="button" disabled>Change photo</Button>
+        <p class="mt-1.5 text-muted">JPG or PNG, up to 2 MB.</p>
       </div>
     </div>
-    <label class="field">
-      Full name<input value={user?.full_name} autocomplete="name" readonly />
-    </label>
-    <label class="field">Role<input value={user?.role} readonly /></label>
-    <label class="field wide">
-      Email address<input type="email" value={user?.email} autocomplete="email" readonly />
-    </label>
-    <button class="btn primary" disabled>Save changes</button>
+    <Field label="Full name"><input value={user?.full_name} autocomplete="name" readonly /></Field>
+    <Field label="Role"><input value={user?.role} readonly /></Field>
+    <Field label="Email address" class="col-span-full">
+      <input type="email" value={user?.email} autocomplete="email" readonly />
+    </Field>
+    <Button variant="primary" class="col-start-2 justify-self-end" disabled>Save changes</Button>
   </form>
-</section>
-
-<style>
-  section {
-    margin-top: 16px;
-  }
-  header {
-    padding: 24px;
-    border-bottom: 1px solid #e5eded;
-  }
-  h1 {
-    font-size: 18px;
-  }
-  p {
-    margin-top: 6px;
-    color: var(--muted);
-  }
-  form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding: 24px;
-  }
-  .wide {
-    grid-column: 1 / -1;
-  }
-  .photo img {
-    border-radius: 50%;
-  }
-  .photo {
-    display: flex;
-    gap: 16px;
-  }
-  .primary {
-    grid-column: 2;
-    justify-self: end;
-    border-radius: 12px;
-  }
-</style>
+</Card>

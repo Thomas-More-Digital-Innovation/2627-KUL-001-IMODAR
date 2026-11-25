@@ -2,6 +2,11 @@
   import { auth } from '#lib/api/auth.ts';
   import { messageOf } from '#lib/api/http.ts';
 
+  import Button from './Button.svelte';
+  import Card from './Card.svelte';
+  import Field from './Field.svelte';
+  import Notice from './Notice.svelte';
+
   let current = $state('');
   let next = $state('');
   let confirmation = $state('');
@@ -37,14 +42,13 @@
   }
 </script>
 
-<div class="stack">
-  {#if message}<p class="notice" role="status">{message}</p>{/if}
-  {#if error}<p class="notice" role="alert">{error}</p>{/if}
-  <section class="card">
-    <h2>Password &amp; authentication</h2>
-    <form onsubmit={changePassword}>
-      <label class="field wide">
-        Current password
+<div class="grid gap-6 font-sans">
+  {#if message}<Notice role="status">{message}</Notice>{/if}
+  {#if error}<Notice role="alert">{error}</Notice>{/if}
+  <Card class="rounded-2xl shadow-[0_1px_3px_#0000001a]">
+    <h2 class="px-6 py-[22px] text-[18px]">Password &amp; authentication</h2>
+    <form class="grid grid-cols-2 gap-5 border-t border-[#e5eded] p-6" onsubmit={changePassword}>
+      <Field label="Current password" class="col-span-full">
         <input
           type="password"
           autocomplete="current-password"
@@ -53,9 +57,8 @@
           required
           bind:value={current}
         />
-      </label>
-      <label class="field">
-        New password
+      </Field>
+      <Field label="New password">
         <input
           type="password"
           autocomplete="new-password"
@@ -65,9 +68,8 @@
           required
           bind:value={next}
         />
-      </label>
-      <label class="field">
-        Confirm password
+      </Field>
+      <Field label="Confirm password">
         <input
           type="password"
           autocomplete="new-password"
@@ -75,85 +77,35 @@
           required
           bind:value={confirmation}
         />
-      </label>
-      <button class="btn primary" disabled={busy}>Update password</button>
+      </Field>
+      <Button variant="primary" class="col-start-2 justify-self-end" disabled={busy}>
+        Update password
+      </Button>
     </form>
-  </section>
-  <section class="card row">
-    <h2>Two-factor authentication</h2>
-    <span class="muted">On · required for every account</span>
-  </section>
-  <section class="card sessions">
-    <div class="row">
+  </Card>
+  <Card
+    class="flex items-center justify-between rounded-2xl py-3 pr-6 shadow-[0_1px_3px_#0000001a]"
+  >
+    <h2 class="px-6 py-[22px] text-[18px]">Two-factor authentication</h2>
+    <span class="mt-1 text-muted">On · required for every account</span>
+  </Card>
+  <Card class="rounded-2xl p-6 shadow-[0_1px_3px_#0000001a]">
+    <div class="flex items-center justify-between">
       <div>
-        <h2>Active sessions</h2>
-        <p class="muted">Devices currently signed in to your account.</p>
+        <h2 class="text-[18px]">Active sessions</h2>
+        <p class="mt-1 text-muted">Devices currently signed in to your account.</p>
       </div>
-      <button
-        class="btn out"
+      <Button
+        variant="danger-outline"
         disabled={busy}
         onclick={() => run(auth.revokeOthers, 'Other devices were signed out.')}
       >
         Sign out others
-      </button>
+      </Button>
     </div>
-    <div class="session">
+    <div class="mt-5 rounded-xl bg-[#f4f8f8] p-4">
       This device
-      <p class="muted">Current session</p>
+      <p class="mt-1 text-muted">Current session</p>
     </div>
-  </section>
+  </Card>
 </div>
-
-<style>
-  .stack {
-    display: grid;
-    gap: 24px;
-    font-family: var(--sans);
-  }
-  h2 {
-    font-size: 18px;
-  }
-  .card > h2 {
-    padding: 22px 24px;
-  }
-  form {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding: 24px;
-    border-top: 1px solid #e5eded;
-  }
-  .wide {
-    grid-column: 1 / -1;
-  }
-  form button {
-    grid-column: 2;
-    justify-self: end;
-    border-radius: 12px;
-  }
-  .row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .card.row {
-    padding: 12px 24px 12px 0;
-  }
-  .sessions {
-    padding: 24px;
-  }
-  .muted {
-    margin-top: 4px;
-    color: var(--muted);
-  }
-  .session {
-    margin-top: 20px;
-    padding: 16px;
-    border-radius: 12px;
-    background: #f4f8f8;
-  }
-  .out {
-    color: var(--danger);
-    border-color: #e0b9b9;
-  }
-</style>

@@ -1,6 +1,10 @@
 <script lang="ts">
   import { auth } from '#lib/api/auth.ts';
   import { messageOf } from '#lib/api/http.ts';
+  import Button from '#lib/components/Button.svelte';
+  import Field from '#lib/components/Field.svelte';
+  import Logo from '#lib/components/Logo.svelte';
+  import Notice from '#lib/components/Notice.svelte';
   import SignInCode from '#lib/components/SignInCode.svelte';
 
   let step = $state<'password' | 'verify' | 'enrol' | 'codes'>('password');
@@ -65,14 +69,23 @@
 </script>
 
 <svelte:head><title>Sign in · IMODAR</title></svelte:head>
-<main>
-  <div class="art"><img src="/images/dna.png" alt="" /><span class="logo">IMODAR</span></div>
-  <form onsubmit={submit}>
-    <h1>IMODAR</h1>
-    <p class="subtitle">{subtitle}</p>
+<main class="grid min-h-screen grid-cols-2 max-[801px]:grid-cols-1">
+  <div class="relative overflow-hidden bg-navy max-[801px]:hidden">
+    <img
+      class="absolute top-[-2.5%] left-[-23.6%] w-[156.4%] max-w-none origin-[52.3%_47.8%] rotate-[-85.85deg]"
+      src="/images/dna.png"
+      alt=""
+    />
+    <Logo class="absolute top-[18px] left-6 text-white" />
+  </div>
+  <form
+    class="mx-auto mt-[137px] mb-10 grid w-[min(620px,86%)] content-start gap-[27px]"
+    onsubmit={submit}
+  >
+    <h1 class="text-center text-[64px] leading-[70px] font-extrabold text-black">IMODAR</h1>
+    <p class="-mt-[27px] mb-7 text-center text-[36px] tracking-[-1.26px]">{subtitle}</p>
     {#if step === 'password'}
-      <label class="field">
-        Email address
+      <Field label="Email address" large>
         <input
           type="email"
           autocomplete="username"
@@ -80,9 +93,8 @@
           required
           bind:value={email}
         />
-      </label>
-      <label class="field">
-        Password
+      </Field>
+      <Field label="Password" large>
         <input
           type="password"
           autocomplete="current-password"
@@ -90,142 +102,49 @@
           required
           bind:value={password}
         />
-      </label>
-      <div class="options">
-        <label><input type="checkbox" bind:checked={remember} /> Remember me</label>
+      </Field>
+      <div class="flex items-center justify-between gap-3.5 text-[19.3px] text-body">
+        <label class="flex items-center gap-3.5">
+          <input type="checkbox" bind:checked={remember} /> Remember me
+        </label>
         <!-- TODO: enable once password reset emails exist. -->
-        <button type="button" class="link" disabled>Forgot password?</button>
+        <Button type="button" variant="link" disabled>Forgot password?</Button>
       </div>
     {:else if step === 'verify'}
       <SignInCode label="Authenticator or recovery code" bind:code />
     {:else if step === 'enrol'}
-      <p class="enrol">Scan this with your authenticator app, then enter the code it shows.</p>
-      <img class="qr" src={enrolment.qr_code} alt="QR code for your authenticator app" />
-      <p class="enrol">Or enter this key: <code>{enrolment.secret}</code></p>
+      <p class="text-[16px] leading-6">
+        Scan this with your authenticator app, then enter the code it shows.
+      </p>
+      <img
+        class="mx-auto w-[220px] bg-white"
+        src={enrolment.qr_code}
+        alt="QR code for your authenticator app"
+      />
+      <p class="text-[16px] leading-6">
+        Or enter this key: <code class="text-[13px] wrap-anywhere">{enrolment.secret}</code>
+      </p>
       <SignInCode label="Authenticator code" bind:code />
     {:else}
-      <p class="enrol">
+      <p class="text-[16px] leading-6">
         Each code replaces your authenticator once. Store them safely; they are not shown again.
       </p>
-      <ul class="codes">
-        {#each recoveryCodes as item (item)}<li><code>{item}</code></li>{/each}
+      <ul class="grid grid-cols-2 gap-2 rounded-xl bg-white p-5">
+        {#each recoveryCodes as item (item)}<li>
+            <code class="text-[13px] wrap-anywhere">{item}</code>
+          </li>{/each}
       </ul>
     {/if}
-    {#if error}<p class="notice" role="alert">{error}</p>{/if}
-    <button class="submit" disabled={busy}>
+    {#if error}<Notice role="alert">{error}</Notice>{/if}
+    <button
+      class="flex h-[77px] items-center justify-center gap-[11px] rounded-[16.5px] bg-action text-[22px] text-white shadow-[0_10px_20px_#087f9133]"
+      disabled={busy}
+    >
       {step === 'password' ? 'Sign in' : step === 'codes' ? 'I saved these codes' : 'Verify'}
       <img src="/images/arrow.svg" alt="" />
     </button>
     {#if step === 'verify' || step === 'enrol'}
-      <button type="button" class="link" onclick={restart}>Start again</button>
+      <Button type="button" variant="link" onclick={restart}>Start again</Button>
     {/if}
   </form>
 </main>
-
-<style>
-  main {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    min-height: 100vh;
-  }
-  .art {
-    position: relative;
-    overflow: hidden;
-    background: var(--navy);
-  }
-  .art img {
-    position: absolute;
-    top: -2.5%;
-    left: -23.6%;
-    width: 156.4%;
-    max-width: none;
-    transform: rotate(-85.85deg);
-    transform-origin: 52.3% 47.8%;
-  }
-  .art span {
-    position: absolute;
-    top: 18px;
-    left: 24px;
-    color: #fff;
-  }
-  form {
-    display: grid;
-    align-content: start;
-    gap: 27px;
-    width: min(620px, 86%);
-    margin: 137px auto 40px;
-  }
-  h1 {
-    font-size: 64px;
-    font-weight: 800;
-    line-height: 70px;
-    text-align: center;
-    color: #000;
-  }
-  .subtitle {
-    margin: -27px 0 28px;
-    font-size: 36px;
-    letter-spacing: -1.26px;
-    text-align: center;
-  }
-  .field,
-  .options {
-    font-size: 19.3px;
-  }
-  .field input {
-    height: 77px;
-    padding: 0 21px;
-    border-radius: 16.5px;
-    font-size: 22px;
-  }
-  .options,
-  .options label {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 14px;
-    color: var(--body);
-  }
-  .submit {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 11px;
-    height: 77px;
-    border-radius: 16.5px;
-    background: var(--action);
-    color: #fff;
-    font-size: 22px;
-    box-shadow: 0 10px 20px #087f9133;
-  }
-  .enrol {
-    font-size: 16px;
-    line-height: 24px;
-  }
-  .qr {
-    width: 220px;
-    margin: 0 auto;
-    background: #fff;
-  }
-  code {
-    overflow-wrap: anywhere;
-  }
-  .codes {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin: 0;
-    padding: 20px;
-    border-radius: 12px;
-    background: #fff;
-    list-style: none;
-  }
-  @media (max-width: 800px) {
-    main {
-      grid-template-columns: 1fr;
-    }
-    .art {
-      display: none;
-    }
-  }
-</style>

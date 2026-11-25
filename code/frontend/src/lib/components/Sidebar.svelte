@@ -3,6 +3,9 @@
   import { auth } from '#lib/api/auth.ts';
   import { messageOf } from '#lib/api/http.ts';
   import { analyses } from '#lib/analyses.svelte.ts';
+  import Logo from './Logo.svelte';
+  const menuItem = 'rounded-[17px] px-[13px] py-[5px] text-left hover:bg-white/12';
+  const panel = 'rounded-[17px] border border-dashed border-[#4ba1b1] bg-white/12 text-[18px]';
   let menuOpen = $state(false);
   let error = $state('');
   const user = $derived(page.data.user);
@@ -18,16 +21,25 @@
   }
 </script>
 
-<aside>
-  <a class="logo" href="/">IMODAR</a>
-  <button class="new" disabled={!!analyses.pending} onclick={() => analyses.select(null)}>
+<aside
+  class="flex h-screen w-[clamp(230px,27vw,388px)] shrink-0 flex-col bg-navy px-4 pt-[18px] pb-[13px] text-white"
+>
+  <a class="pl-2" href="/"><Logo /></a>
+  <button
+    class="mt-[58px] mb-9 min-h-[55px] rounded-lg bg-white px-[9px] text-left text-[23.7px] text-navy"
+    disabled={!!analyses.pending}
+    onclick={() => analyses.select(null)}
+  >
     + New analysis
   </button>
-  <h2>Recent analysis</h2>
-  <nav aria-label="Recent analysis">
+  <h2 class="mb-2.5 text-[26.5px]">Recent analysis</h2>
+  <nav class="flex-1 overflow-y-auto" aria-label="Recent analysis">
     {#each analyses.items as item (item.id)}
       <button
-        class:active={item.id === analyses.activeId}
+        class={[
+          'min-h-[63px] w-full truncate rounded-[17px] px-[17px] py-3 text-left text-[20px]',
+          item.id === analyses.activeId ? 'bg-white/12 text-white' : 'text-[#ecfeffcc]',
+        ]}
         aria-current={item.id === analyses.activeId || undefined}
         disabled={!!analyses.pending}
         onclick={() => analyses.select(item.id)}
@@ -37,108 +49,24 @@
     {/each}
   </nav>
   {#if menuOpen}
-    <div class="menu" id="user-menu">
-      <a href="/settings/profile">Settings</a>
-      {#if user?.role === 'admin'}<a href="/admin/users">Dashboard</a>{/if}
-      <button onclick={logout}>Log out</button>
+    <div class={[panel, 'mb-[5px] grid p-[5px]']} id="user-menu">
+      <a class={menuItem} href="/settings/profile">Settings</a>
+      {#if user?.role === 'admin'}<a class={menuItem} href="/admin/users">Dashboard</a>{/if}
+      <button class={menuItem} onclick={logout}>Log out</button>
       {#if error}<p role="alert">{error}</p>{/if}
     </div>
   {/if}
   <button
-    class="user"
+    class={[panel, 'flex min-h-[63px] items-center gap-3.5 px-2.5 py-[5px] text-left']}
     aria-expanded={menuOpen}
     aria-controls="user-menu"
     onclick={() => (menuOpen = !menuOpen)}
   >
     <img src="/images/avatar.svg" alt="" width="41" height="41" />
-    <span>{user?.full_name}<br />{user?.email}</span><b aria-hidden="true">
+    <span class="min-w-0 flex-1 overflow-hidden text-ellipsis">
+      {user?.full_name}<br />{user?.email}
+    </span><b aria-hidden="true">
       {menuOpen ? '↓' : '↑'}
     </b>
   </button>
 </aside>
-
-<style>
-  aside {
-    display: flex;
-    flex-direction: column;
-    width: clamp(230px, 27vw, 388px);
-    flex-shrink: 0;
-    height: 100vh;
-    padding: 18px 16px 13px;
-    background: var(--navy);
-    color: #fff;
-  }
-  .logo {
-    padding-left: 8px;
-  }
-  .new {
-    min-height: 55px;
-    margin: 58px 0 36px;
-    padding: 0 9px;
-    border-radius: 8px;
-    background: #fff;
-    color: var(--navy);
-    font-size: 23.7px;
-    text-align: left;
-  }
-  h2 {
-    font-size: 26.5px;
-    margin-bottom: 10px;
-  }
-  nav {
-    flex: 1;
-    overflow-y: auto;
-  }
-  nav button {
-    width: 100%;
-    min-height: 63px;
-    padding: 12px 17px;
-    border-radius: 17px;
-    overflow: hidden;
-    color: #ecfeffcc;
-    font-size: 20px;
-    text-align: left;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  nav .active {
-    background: #ffffff1f;
-    color: #fff;
-  }
-  .menu,
-  .user {
-    border: 1px dashed #4ba1b1;
-    border-radius: 17px;
-    background: #ffffff1f;
-    font-size: 18px;
-  }
-  .menu {
-    display: grid;
-    margin-bottom: 5px;
-    padding: 5px;
-  }
-  .menu a,
-  .menu button {
-    text-align: left;
-    padding: 5px 13px;
-    border-radius: 17px;
-  }
-  .menu a:hover,
-  .menu button:hover {
-    background: #ffffff1f;
-  }
-  .user {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    min-height: 63px;
-    padding: 5px 10px;
-    text-align: left;
-  }
-  .user span {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-</style>

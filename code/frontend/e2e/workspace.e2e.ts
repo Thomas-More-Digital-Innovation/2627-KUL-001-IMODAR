@@ -64,7 +64,7 @@ test('renders markdown without trusting it and sends thinking mode', async ({ pa
   await expect(toggle).toHaveAttribute('aria-pressed', 'true');
   await page.getByLabel('Ask a question').fill('Compare CRP');
   await page.getByRole('button', { name: 'Submit question' }).click();
-  const summary = page.locator('.summary');
+  const summary = page.getByTestId('summary');
   await expect(summary.getByRole('heading', { name: 'Finding' })).toBeVisible();
   await expect(summary.getByRole('listitem')).toHaveCount(2);
   await expect(summary.locator('strong')).toHaveText('CRP');

@@ -51,7 +51,7 @@ All AI agents assisting in this repository must strictly adhere to the rules bel
 
 * **Reactivity:** Use runes (`$state`, `$derived`, `$props`, `$effect`) exclusively. Prefer `$derived` over `$effect`.
 * **Components:** Check `src/lib/components` before creating one. Keep them small and focused.
-* **Styling:** Use scoped CSS and the tokens in `app.css`. Follow the Figma design.
+* **Styling:** Style exclusively with Tailwind utility classes: no `<style>` blocks, no custom CSS classes. Design tokens live in `@theme` in `app.css`; reuse the components in `src/lib/components` instead of repeating class lists. Follow the Figma design.
 * **Rendering untrusted text:** Never use `{@html}` for model or API output.
 * **Pessimistic UI:** Update state only after a successful response. Show loading and disabled states.
 * **Generated API types:** Contract types come **only** from `src/lib/api/schema.ts`. Never edit it or `code/backend/openapi/imodar.json` by hand; regenerate them.

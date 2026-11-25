@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import Button from './Button.svelte';
   let {
     title,
     open = $bindable(false),
@@ -13,49 +14,18 @@
   });
 </script>
 
-<dialog bind:this={element} onclose={() => (open = false)} aria-label={title}>
-  <header>
-    <h2>{title}</h2>
-    <button aria-label="Close" onclick={() => (open = false)}>×</button>
+<dialog
+  class="m-auto w-[min(640px,94vw)] rounded-2xl bg-white font-admin text-[#294952] shadow-[0_16px_64px_#122e372e] backdrop:bg-[#16363d73]"
+  bind:this={element}
+  onclose={() => (open = false)}
+  aria-label={title}
+>
+  <header class="flex justify-between px-8 pt-[26px] pb-2 text-[28px]">
+    <h2 class="font-bold">{title}</h2>
+    <button class="px-1.5 py-px" aria-label="Close" onclick={() => (open = false)}>×</button>
   </header>
-  <div class="content">{@render children()}</div>
-  <footer>
-    <button class="btn" onclick={() => (open = false)}>Cancel</button>{@render actions()}
+  <div class="grid gap-5 px-8 pt-2 pb-6">{@render children()}</div>
+  <footer class="flex justify-end gap-4 bg-[#f8fafb] px-8 py-7">
+    <Button onclick={() => (open = false)}>Cancel</Button>{@render actions()}
   </footer>
 </dialog>
-
-<style>
-  dialog {
-    width: min(640px, 94vw);
-    padding: 0;
-    border: 0;
-    border-radius: 16px;
-    color: #294952;
-    font-family: var(--admin);
-    box-shadow: 0 16px 64px #122e372e;
-  }
-  dialog::backdrop {
-    background: #16363d73;
-  }
-  header {
-    display: flex;
-    justify-content: space-between;
-    padding: 26px 32px 8px;
-    font-size: 28px;
-  }
-  h2 {
-    font-weight: 700;
-  }
-  .content {
-    display: grid;
-    gap: 20px;
-    padding: 8px 32px 24px;
-  }
-  footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 16px;
-    padding: 28px 32px;
-    background: #f8fafb;
-  }
-</style>

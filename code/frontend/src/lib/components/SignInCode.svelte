@@ -1,9 +1,9 @@
 <script lang="ts">
+  import Field from './Field.svelte';
   let { label, code = $bindable('') }: { label: string; code: string } = $props();
 </script>
 
-<label class="field">
-  {label}
+<Field {label}>
   <input
     autocomplete="one-time-code"
     autocapitalize="off"
@@ -13,4 +13,4 @@
     required
     bind:value={code}
   />
-</label>
+</Field>

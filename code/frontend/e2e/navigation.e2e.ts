@@ -27,7 +27,7 @@ test('admin confirms bulk deletion and reaches resource access', async ({ page }
   await page.goto('/admin/case-studies');
   await page.getByLabel('Select Community health outcomes').check();
   await page.getByLabel('Select Remote care adoption').check();
-  await page.locator('.bulk').getByRole('button', { name: 'Delete' }).click();
+  await page.getByTestId('bulk-actions').getByRole('button', { name: 'Delete' }).click();
   const dialog = page.getByRole('dialog', { name: 'Delete 2 papers?' });
   await expect(dialog.getByRole('listitem')).toHaveCount(2);
   await dialog.getByRole('button', { name: 'Cancel' }).click();
