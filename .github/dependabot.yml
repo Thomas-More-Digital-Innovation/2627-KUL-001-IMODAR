@@ -4,8 +4,7 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "thursday"
+      interval: "daily"
       time: "04:00"
       timezone: "UTC"
     open-pull-requests-limit: 10
@@ -22,8 +21,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/code/frontend"
     schedule:
-      interval: "weekly"
-      day: "thursday"
+      interval: "daily"
       time: "04:00"
       timezone: "UTC"
     open-pull-requests-limit: 10
@@ -32,13 +30,51 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     groups:
-      vue:
+      svelte:
         patterns:
-          - "vue*"
-          - "@vue/*"
-          - "@vitejs/*"
+          - "svelte*"
+          - "@sveltejs/*"
       tooling:
         patterns:
+          - "*eslint*"
+          - "prettier*"
           - "typescript*"
-          - "vue-tsc*"
+          - "@playwright/*"
           - "vite*"
+          - "globals"
+          - "openapi-typescript"
+
+  # Backend (uv dependencies)
+  - package-ecosystem: "uv"
+    directory: "/code/backend"
+    schedule:
+      interval: "daily"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      tooling:
+        patterns:
+          - "pytest*"
+          - "ruff*"
+
+  # Docker Compose images
+  - package-ecosystem: "docker-compose"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(docker)"
+    groups:
+      docker:
+        patterns:
+          - "*"

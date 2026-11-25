@@ -1,0 +1,127 @@
+:root {
+  --navy: #0b5967;
+  --brand: #0b7181;
+  --action: #087f91;
+  --link: #078ba0;
+  --bg: #f0f4f8;
+  --admin-bg: #f3f7f9;
+  --ink: #17373e;
+  --muted: #71858a;
+  --body: #536b70;
+  --border: #dce6e7;
+  --field: #cfdbdd;
+  --tint: #e1f0f2;
+  --danger: #a34343;
+  --sans: 'LINE Seed JP', sans-serif;
+  --admin: 'Manrope Variable', sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+  font-weight: inherit;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--action);
+}
+.logo {
+  font-size: 26.5px;
+  font-weight: 800;
+  font-family: var(--sans);
+}
+.btn {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid #d7e2e6;
+  border-radius: 8px;
+  background: #fff;
+  font-weight: 600;
+}
+.btn.primary {
+  background: var(--action);
+  border-color: var(--action);
+  color: #fff;
+}
+.btn.danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.link {
+  color: var(--brand);
+  font-weight: 600;
+}
+.link.danger-text {
+  color: var(--danger);
+}
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 1px 3px #0000001a;
+}
+.field {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+}
+.field input,
+.field select {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--field);
+  border-radius: 12px;
+  background: #fff;
+  font-size: 16px;
+}
+.notice {
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #fff3d9;
+  color: #805e15;
+}
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}

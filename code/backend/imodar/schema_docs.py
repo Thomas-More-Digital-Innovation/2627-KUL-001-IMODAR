@@ -1,0 +1,185 @@
+"""Human/LLM-readable documentation of the warehouse schema.
+
+Used for: DuckDB COMMENTs, the planner prompt, and the UI schema browser.
+The guardrail whitelist itself is read from the *actual* database catalog.
+"""
+
+from __future__ import annotations
+
+TABLES: dict[str, dict] = {
+    "catalog.studies": {
+        "doc": "One row per study. Start here to find which studies exist and what they contain.",
+        "columns": {
+            "study_id": "Study identifier, e.g. 'IMO-007'. Joins to study_id in every other table.",
+            "study_name": "Descriptive study name.",
+            "target_condition": "Free-text target population/condition.",
+            "protocol_type": "Design (case-control, longitudinal cohort, ...).",
+            "modalities": "Comma-separated data modalities: clinical, lab, luminex, mass_spec, ngs, microscopy.",
+            "description": "Free-text study summary.",
+            "n_participants": "Number of persons ingested for the study (computed).",
+            "n_cases": "Persons with cohort_group='case' (case-control studies).",
+            "n_controls": "Persons with cohort_group='control'.",
+            "has_data": "FALSE when the study folder was empty.",
+        },
+    },
+    "catalog.data_files": {
+        "doc": "Every source file per study, including non-tabular raw assets (images, FASTQ) that are registered but not queryable.",
+        "columns": {
+            "study_id": "Study identifier.",
+            "file_name": "Source file name.",
+            "parser": "Ingest parser used.",
+            "asset_type": "tabular | microscopy_image | fastq_reads.",
+            "size_bytes": "File size.",
+            "details": "JSON details (e.g. read counts for FASTQ).",
+            "note": "Curator note.",
+        },
+    },
+    "catalog.concept_coverage": {
+        "doc": "Pre-computed: which concept is recorded in which study, in which table, for how many persons. Use it to answer 'which studies measured X'.",
+        "columns": {
+            "concept_id": "Concept.",
+            "concept_name": "Concept name.",
+            "domain_id": "Domain.",
+            "study_id": "Study.",
+            "source_table": "measurement | observation | condition_occurrence.",
+            "modality": "clinical | luminex | mass_spec (measurement only).",
+            "value_types": "Comma-separated value_type values present (measurement only).",
+            "units": "Comma-separated units present.",
+            "n_persons": "Distinct persons.",
+            "n_records": "Rows.",
+        },
+    },
+    "omop.person": {
+        "doc": "One row per participant. Persons are NOT linked across studies.",
+        "columns": {
+            "person_id": "Surrogate key (study number * 100000 + patient number).",
+            "person_source_value": "Normalised source id, e.g. 'IMO-003-012'.",
+            "study_id": "Study the person belongs to.",
+            "gender_concept_id": "8507 = MALE, 8532 = FEMALE, NULL = not recorded.",
+            "gender_source_value": "Raw value (Man/Vrouw/M/F).",
+            "year_of_birth": "Only where a birth date was recorded.",
+            "birth_date": "Only where recorded.",
+            "age_years": "Age in years (recorded at diagnosis/inclusion, or computed from birth date). NULL if unknown.",
+            "age_basis": "How age_years was obtained.",
+            "cohort_group": "'case' | 'control' for case-control studies, else NULL.",
+        },
+    },
+    "omop.condition_occurrence": {
+        "doc": "Primary study diagnosis per person (cancer type). Controls without malignancy have no row.",
+        "columns": {
+            "condition_occurrence_id": "Key.",
+            "person_id": "FK person.",
+            "study_id": "Study.",
+            "condition_concept_id": "FK concept (domain Condition). Use concept_ancestor to include subtypes.",
+            "condition_source_value": "Raw diagnosis text (often Dutch).",
+            "condition_start_date": "Diagnosis/inclusion date when known.",
+            "condition_status": "'Primary study diagnosis'.",
+        },
+    },
+    "omop.measurement": {
+        "doc": "ALL numeric values in long format: clinical (BMI, ECOG, PFS, ...), lab (CA-125, CRP, ...), Luminex cytokines, mass-spec protein intensities, TMB, PD-L1. Filter by measurement_concept_id AND value_type.",
+        "columns": {
+            "measurement_id": "Key.",
+            "person_id": "FK person.",
+            "study_id": "Study.",
+            "measurement_concept_id": "FK concept (domain Measurement).",
+            "measurement_source_value": "Raw source column / analyte name.",
+            "measurement_date": "Date when known.",
+            "value_as_number": "Numeric value. NULL when out of assay range ('<' or '>').",
+            "value_source_value": "Raw string exactly as in the source file.",
+            "operator": "'=' normally; '<' below / '>' above detection range.",
+            "range_flag": "NULL | below_range | above_range | extrapolated (value outside standard curve, still numeric).",
+            "unit_source_value": "Unit, e.g. pg/mL, U/mL, mg/L, kg, months, AU, log2(AU), ratio.",
+            "value_type": "value | concentration (Luminex) | intensity | log2_intensity | fold_change_vs_diagnosis (mass spec) | duration | percentage.",
+            "modality": "clinical | luminex | mass_spec.",
+            "specimen_source_value": "FK omop.specimen.specimen_source_value (for assay data).",
+            "timepoint": "Baseline | Diagnosis | PostOp | EndRT | 3Months | 6Months | Recurrence (NULL for one-off clinical values).",
+        },
+    },
+    "omop.observation": {
+        "doc": "ALL categorical facts in long format (smoking, BRCA, FIGO stage, MGMT, IDH, MSI, comorbidities yes/no, responses, ...). Values normalised to English in value_as_string.",
+        "columns": {
+            "observation_id": "Key.",
+            "person_id": "FK person.",
+            "study_id": "Study.",
+            "observation_concept_id": "FK concept (domain Observation).",
+            "observation_source_value": "Raw source column name.",
+            "value_as_string": "Normalised English value (e.g. 'Yes', 'Current smoker', 'BRCA1 mutation', 'Methylated').",
+            "value_source_value": "Raw value as in the source file (often Dutch).",
+            "observation_date": "Date when known.",
+        },
+    },
+    "omop.specimen": {
+        "doc": "Biological samples. Longitudinal studies have one specimen per timepoint.",
+        "columns": {
+            "specimen_id": "Key.",
+            "person_id": "FK person.",
+            "study_id": "Study.",
+            "specimen_source_value": "Sample id, e.g. 'IMO-007-001_PostOp'.",
+            "specimen_type": "Blood | Plasma | FFPE tissue | Fresh tissue | ...",
+            "timepoint": "Sampling timepoint.",
+            "specimen_date": "Sampling date when known.",
+        },
+    },
+    "genomics.ngs_variant": {
+        "doc": "One row per NGS-profiled tumour sample (study IMO-009): main driver alteration, CNV and fusion calls.",
+        "columns": {
+            "person_id": "FK person.",
+            "study_id": "Study.",
+            "specimen_source_value": "FK specimen.",
+            "gene_symbol": "Driver gene (HGNC symbol, e.g. 'KRAS', 'BRAF', 'HER2').",
+            "variant_type": "Missense | Nonsense | Frameshift | Splice-site | Inframe Deletion | Amplification.",
+            "vaf_percent": "Variant allele frequency (%).",
+            "cnv_status": "None | Gain | Loss | Amplification.",
+            "fusion_gene": "Fusion partner detected (ALK, ROS1, RET, NTRK) or 'None'.",
+            "ngs_panel": "Sequencing panel used.",
+        },
+    },
+    "imaging.radiology_series": {
+        "doc": "The Cancer Imaging Archive (TCIA) radiology scans: CT, PET (PT), MRI, RTSTRUCT with slice counts, scanner models, body parts.",
+        "columns": {
+            "series_uid": "DICOM SeriesInstanceUID.",
+            "study_uid": "DICOM StudyInstanceUID.",
+            "person_id": "FK omop.person.",
+            "study_id": "TCIA collection / study identifier, e.g. 'TCIA-4D-Lung', 'TCIA-HNSCC-PET-CT', 'TCIA-NSCLC-PET'.",
+            "patient_source_value": "Original TCIA Patient ID.",
+            "modality": "Imaging modality: 'CT', 'PT' (PET), 'MR' (MRI), 'RTSTRUCT'.",
+            "body_part": "Anatomical site: 'LUNG', 'CHEST', 'NECK', 'HEAD', 'ABDOMEN', etc.",
+            "image_count": "Number of DICOM slices / images in the series.",
+            "file_size_bytes": "Total series file size in bytes.",
+            "manufacturer": "Scanner hardware manufacturer: 'SIEMENS', 'GE MEDICAL SYSTEMS', 'Varian', 'PHILIPS', etc.",
+            "manufacturer_model": "Scanner model name.",
+            "series_description": "Clinical series description.",
+            "protocol_name": "Imaging acquisition protocol.",
+            "study_date": "Date of imaging session.",
+        },
+    },
+    "omop.concept": {
+        "doc": "Vocabulary. Prefer the concept IDs supplied in the prompt; do not guess IDs.",
+        "columns": {
+            "concept_id": "Key.",
+            "concept_name": "Name.",
+            "domain_id": "Condition | Measurement | Observation | Gender.",
+            "vocabulary_id": "IMO_LOCAL (site-local ids > 2e9) | Gender | UniProt.",
+            "concept_class_id": "Class.",
+            "standard_concept": "'S'.",
+            "concept_code": "Code (gene symbol / UniProt accession / key).",
+        },
+    },
+    "omop.concept_synonym": {
+        "doc": "Synonyms (English + Dutch) per concept.",
+        "columns": {"concept_id": "FK concept.", "concept_synonym_name": "Synonym."},
+    },
+    "omop.concept_ancestor": {
+        "doc": "Hierarchy closure incl. self rows. e.g. all lung cancers: condition_concept_id IN (SELECT descendant_concept_id FROM omop.concept_ancestor WHERE ancestor_concept_id = <lung cancer id>).",
+        "columns": {
+            "ancestor_concept_id": "Ancestor.",
+            "descendant_concept_id": "Descendant.",
+            "min_levels_of_separation": "0 = self.",
+        },
+    },
+    "catalog.ingest_log": {
+        "doc": "Ingest audit log (warnings, unmapped values, per-file counts).",
+        "columns": {"study_id": "Study.", "file_name": "File.", "level": "INFO | WARN | ERROR.", "message": "Message."},
+    },
+}

@@ -1,0 +1,421 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "IMODAR API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health",
+        "description": "Liveness only; does not touch the warehouse or the model.",
+        "operationId": "health_api_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/studies": {
+      "get": {
+        "summary": "List Studies",
+        "description": "List the studies that contain queryable data.",
+        "operationId": "list_studies_api_studies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Study"
+                  },
+                  "type": "array",
+                  "title": "Response List Studies Api Studies Get"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Warehouse unavailable"
+          }
+        }
+      }
+    },
+    "/api/analyses": {
+      "post": {
+        "summary": "Create Analysis",
+        "description": "Plan, validate, execute and summarise a question.",
+        "operationId": "create_analysis_api_analyses_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnalysisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnalysisResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "A dependency is unavailable"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AnalysisRequest": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Question"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "title": "AnalysisRequest"
+      },
+      "AnalysisResponse": {
+        "properties": {
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "clarify",
+              "error"
+            ],
+            "title": "Status"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "title": "Elapsed Ms"
+          },
+          "table": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResultTable"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "audit": {
+            "$ref": "#/components/schemas/AuditTrail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "question",
+          "status",
+          "summary",
+          "elapsed_ms",
+          "table",
+          "audit"
+        ],
+        "title": "AnalysisResponse"
+      },
+      "AuditTrail": {
+        "properties": {
+          "reasoning": {
+            "type": "string",
+            "title": "Reasoning"
+          },
+          "data_sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Data Sources"
+          },
+          "sql": {
+            "type": "string",
+            "title": "Sql"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/ResolvedEntity"
+            },
+            "type": "array",
+            "title": "Entities"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/GuardCheck"
+            },
+            "type": "array",
+            "title": "Checks"
+          },
+          "attempts": {
+            "type": "integer",
+            "title": "Attempts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reasoning",
+          "data_sources",
+          "sql",
+          "entities",
+          "checks",
+          "attempts"
+        ],
+        "title": "AuditTrail"
+      },
+      "GuardCheck": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "passed": {
+            "type": "boolean",
+            "title": "Passed"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "passed",
+          "detail"
+        ],
+        "title": "GuardCheck"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "HealthResponse"
+      },
+      "ResolvedEntity": {
+        "properties": {
+          "mention": {
+            "type": "string",
+            "title": "Mention"
+          },
+          "resolved_to": {
+            "type": "string",
+            "title": "Resolved To"
+          },
+          "concept_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Concept Id"
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "studies": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Studies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "mention",
+          "resolved_to",
+          "concept_id",
+          "domain",
+          "score",
+          "source",
+          "studies"
+        ],
+        "title": "ResolvedEntity"
+      },
+      "ResultTable": {
+        "properties": {
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "rows": {
+            "items": {
+              "items": {},
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "row_count": {
+            "type": "integer",
+            "title": "Row Count"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          },
+          "elapsed_ms": {
+            "type": "number",
+            "title": "Elapsed Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "columns",
+          "rows",
+          "row_count",
+          "truncated",
+          "elapsed_ms"
+        ],
+        "title": "ResultTable"
+      },
+      "Study": {
+        "properties": {
+          "study_id": {
+            "type": "string",
+            "title": "Study Id"
+          },
+          "study_name": {
+            "type": "string",
+            "title": "Study Name"
+          },
+          "n_participants": {
+            "type": "integer",
+            "title": "N Participants"
+          },
+          "modalities": {
+            "type": "string",
+            "title": "Modalities"
+          }
+        },
+        "type": "object",
+        "required": [
+          "study_id",
+          "study_name",
+          "n_participants",
+          "modalities"
+        ],
+        "title": "Study"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

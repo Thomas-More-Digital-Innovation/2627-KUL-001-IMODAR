@@ -8,6 +8,7 @@ on:
       - ".github/actions/security-report/**"
       - "code/frontend/package.json"
       - "code/frontend/package-lock.json"
+      - "code/backend/uv.lock"
       - "**/Dockerfile*"
       - "**/*.dockerfile"
   schedule:
