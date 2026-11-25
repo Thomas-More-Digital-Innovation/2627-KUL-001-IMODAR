@@ -189,6 +189,7 @@ class QueryPlanner:
         question: str,
         max_attempts: int = config.MAX_PLAN_ATTEMPTS,
         temperature: float = 0.0,
+        think: bool | None = None,
     ) -> PlanResult:
         # Step 1: Semantic Entity Resolution
         resolutions = self.extract_and_resolve(question)
@@ -213,7 +214,9 @@ Generate a deterministic execution plan and SQL query formatted as the required 
         attempts: list[PlanAttempt] = []
 
         for attempt_idx in range(1, max_attempts + 1):
-            raw_json = self.llm.chat_json(messages, json_schema=PLANNER_JSON_SCHEMA, temperature=temperature)
+            raw_json = self.llm.chat_json(
+                messages, json_schema=PLANNER_JSON_SCHEMA, temperature=temperature, think=think
+            )
             attempt = PlanAttempt(attempt=attempt_idx, raw_response=raw_json)
             attempts.append(attempt)
 

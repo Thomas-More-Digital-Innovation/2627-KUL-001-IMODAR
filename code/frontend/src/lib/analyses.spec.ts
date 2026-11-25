@@ -21,6 +21,14 @@ describe('Analyses', () => {
     expect(store.items.map((item) => item.title)).toEqual(['second', 'first']);
   });
 
+  it('sends the thinking choice with each question', async () => {
+    const { run, store } = setup();
+    await store.ask('a');
+    store.think = true;
+    await store.ask('b');
+    expect(run.mock.calls.map(([body]) => body.think)).toEqual([false, true]);
+  });
+
   it('keeps state unchanged on failure', async () => {
     const { run, store } = setup();
     run.mockRejectedValue(new Error('Offline'));

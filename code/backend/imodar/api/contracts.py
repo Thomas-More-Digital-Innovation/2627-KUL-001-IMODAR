@@ -20,6 +20,7 @@ class Study(BaseModel):
 
 class AnalysisRequest(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
+    think: bool | None = Field(default=None, description="Model thinking mode; null uses the server default.")
 
 
 class ResultTable(BaseModel):

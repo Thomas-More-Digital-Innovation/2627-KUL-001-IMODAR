@@ -232,6 +232,11 @@ export interface components {
         AnalysisRequest: {
             /** Question */
             question: string;
+            /**
+             * Think
+             * @description Model thinking mode; null uses the server default.
+             */
+            think?: boolean | null;
         };
         /** AnalysisResponse */
         AnalysisResponse: {

@@ -42,11 +42,11 @@ class Pipeline:
         self.planner = QueryPlanner(self.wh, self.llm, self.concept_index)
         self.synthesizer = Synthesizer(self.llm)
 
-    def run(self, question: str, synthesize_prose: bool = True) -> PipelineResult:
+    def run(self, question: str, synthesize_prose: bool = True, think: bool | None = None) -> PipelineResult:
         t0 = time.perf_counter()
 
         # Run planner (which includes semantic resolution, guardrail validation, and execution)
-        plan: PlanResult = self.planner.plan_query(question)
+        plan: PlanResult = self.planner.plan_query(question, think=think)
 
         if plan.status == "clarify":
             total_elapsed = (time.perf_counter() - t0) * 1000
@@ -90,6 +90,7 @@ class Pipeline:
                 sql=plan.sql,
                 df=plan.exec_result.df,
                 total_rows=plan.exec_result.row_count,
+                think=think,
             )
 
         total_elapsed = (time.perf_counter() - t0) * 1000

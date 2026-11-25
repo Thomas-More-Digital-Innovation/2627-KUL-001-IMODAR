@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { AnalysisResponse } from '#lib/api/client.ts';
+  import Markdown from './Markdown.svelte';
   import { downloadCsv } from '#lib/csv.ts';
   let { result }: { result: AnalysisResponse } = $props();
   const heading = $derived(
@@ -14,7 +15,7 @@
   </header>
   <div class="content">
     <h2>{heading}</h2>
-    <p class="summary">{result.summary}</p>
+    <div class="summary"><Markdown source={result.summary} /></div>
     {#if result.table}
       {@const table = result.table}
       <dl>
@@ -58,7 +59,7 @@
     <details>
       <summary>Audit trail</summary>
       <h3>Plan</h3>
-      <p>{result.audit.reasoning}</p>
+      <Markdown source={result.audit.reasoning} />
       <p>
         Sources: {result.audit.data_sources.join(', ') || 'None'} · Attempts: {result.audit
           .attempts}
@@ -116,8 +117,6 @@
   .summary {
     margin-top: 8px;
     color: #5e7479;
-    line-height: 25px;
-    white-space: pre-wrap;
   }
   dl {
     display: grid;

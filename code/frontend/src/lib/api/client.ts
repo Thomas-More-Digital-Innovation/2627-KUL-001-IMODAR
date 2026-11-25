@@ -7,9 +7,9 @@ export type ResultTable = Schemas['ResultTable'];
 
 /** Runs a question through the audited analysis pipeline. */
 export async function createAnalysis(
-  question: string,
+  body: Schemas['AnalysisRequest'],
   fetcher: typeof fetch = fetch,
 ): Promise<AnalysisResponse> {
   const fallback = 'The analysis could not be completed.';
-  return (await request('/api/analyses', fallback, json({ question }), fetcher)).json();
+  return (await request('/api/analyses', fallback, json(body), fetcher)).json();
 }

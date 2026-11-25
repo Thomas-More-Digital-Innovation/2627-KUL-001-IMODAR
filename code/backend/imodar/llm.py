@@ -95,4 +95,4 @@ class OllamaClient:
         try:
             return json.loads(cleaned)
         except json.JSONDecodeError as err:
-            raise ValueError(f"Model output is not valid JSON:\nRaw:\n{raw}") from err
+            raise RuntimeError(f"Model output is not valid JSON:\nRaw:\n{raw}") from err

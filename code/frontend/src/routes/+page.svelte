@@ -19,7 +19,9 @@
       {#if !analyses.active && !analyses.pending}
         <p class="empty">Ask a clinical question across your studies to start an analysis.</p>
       {/if}
-      {#if analyses.pending}<p role="status">Analysing “{analyses.pending}”…</p>{/if}
+      {#if analyses.pending}<p role="status">
+          {analyses.think ? 'Thinking about' : 'Analysing'} “{analyses.pending}”…
+        </p>{/if}
       {#if analyses.error}<p class="notice" role="alert">{analyses.error}</p>{/if}
     </div>
     <form onsubmit={submit}>
@@ -33,7 +35,21 @@
         onkeydown={(event) => {
           if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) void submit(event);
         }}></textarea>
-      <button aria-label="Submit question" disabled={!!analyses.pending || !question.trim()}>
+      <button
+        type="button"
+        class="think"
+        aria-pressed={analyses.think}
+        title="Slower, but better on hard questions"
+        disabled={!!analyses.pending}
+        onclick={() => (analyses.think = !analyses.think)}
+      >
+        Thinking
+      </button>
+      <button
+        class="send"
+        aria-label="Submit question"
+        disabled={!!analyses.pending || !question.trim()}
+      >
         <img src="/images/submit.svg" alt="" />
       </button>
     </form>
@@ -93,7 +109,18 @@
     border: 0;
     resize: none;
   }
-  form button {
+  .think {
+    padding: 0 14px;
+    border: 1px solid var(--field);
+    border-radius: 12px;
+    color: var(--body);
+  }
+  .think[aria-pressed='true'] {
+    border-color: var(--brand);
+    background: var(--tint);
+    color: var(--brand);
+  }
+  .send {
     display: grid;
     place-items: center;
     width: 44px;

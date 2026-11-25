@@ -17,7 +17,8 @@ class StubPipeline:
     def __init__(self, warehouse):
         self.warehouse = warehouse
 
-    def run(self, question):
+    def run(self, question, think=None):
+        self.think = think
         if question == "offline":
             raise RuntimeError("http://internal-host refused")
         ok = question != "clarify"
@@ -63,6 +64,14 @@ def test_analysis_includes_table_and_audit(client):
     assert body["table"]["rows"] == [[1, 50], [2, None]]
     assert body["audit"]["entities"][0]["studies"] == ["T-1"]
     assert all(check["passed"] for check in body["audit"]["checks"])
+
+
+@pytest.mark.parametrize("body,expected", [({}, None), ({"think": True}, True), ({"think": False}, False)])
+def test_thinking_mode_reaches_the_pipeline(client, warehouse, body, expected):
+    pipeline = StubPipeline(warehouse)
+    app.dependency_overrides[get_pipeline] = lambda: pipeline
+    client.post("/api/analyses", json={"question": "ages", **body})
+    assert pipeline.think is expected
 
 
 def test_clarification_has_no_table(client):

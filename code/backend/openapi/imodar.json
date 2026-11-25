@@ -354,6 +354,18 @@
             "maxLength": 2000,
             "minLength": 1,
             "title": "Question"
+          },
+          "think": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Think",
+            "description": "Model thinking mode; null uses the server default."
           }
         },
         "type": "object",

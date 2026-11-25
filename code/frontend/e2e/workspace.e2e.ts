@@ -49,6 +49,31 @@ test('asks a question, audits it and downloads the rows', async ({ page }) => {
   await expect(page.getByText('Cases are higher.')).toBeVisible();
 });
 
+test('renders markdown without trusting it and sends thinking mode', async ({ page }) => {
+  let think: unknown;
+  await page.route('**/api/analyses', (route) => {
+    think = route.request().postDataJSON().think;
+    const summary =
+      '## Finding\n\n- **CRP** is `high`\n- second\n\n| a | b |\n|---|---|\n| 1 | 2 |\n\n' +
+      '<img src=x onerror="window.hacked=1"> [click](javascript:alert(1))';
+    return route.fulfill({ json: { ...answer, table: null, summary } });
+  });
+  await page.goto('/');
+  const toggle = page.getByRole('button', { name: 'Thinking' });
+  await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+  await page.getByLabel('Ask a question').fill('Compare CRP');
+  await page.getByRole('button', { name: 'Submit question' }).click();
+  const summary = page.locator('.summary');
+  await expect(summary.getByRole('heading', { name: 'Finding' })).toBeVisible();
+  await expect(summary.getByRole('listitem')).toHaveCount(2);
+  await expect(summary.locator('strong')).toHaveText('CRP');
+  await expect(summary.getByRole('cell', { name: '2' })).toBeVisible();
+  await expect(summary.locator('img, a')).toHaveCount(0);
+  await expect(summary).toContainText('<img src=x');
+  expect(think).toBe(true);
+});
+
 test('keeps the question when the API is unavailable', async ({ page }) => {
   // Not mocked: exercises the real proxy with no backend behind it.
   await page.goto('/');
