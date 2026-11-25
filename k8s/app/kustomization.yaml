@@ -10,6 +10,6 @@ resources:
 # Tags are committed by the CD workflows.
 images:
   - name: ghcr.io/thomas-more-digital-innovation/2627-kul-001-imodar/backend
-    newTag: latest
+    newTag: b357a74cd2b88a7b0dbf908ef2c6deddf1d79428
   - name: ghcr.io/thomas-more-digital-innovation/2627-kul-001-imodar/frontend
     newTag: b357a74cd2b88a7b0dbf908ef2c6deddf1d79428
