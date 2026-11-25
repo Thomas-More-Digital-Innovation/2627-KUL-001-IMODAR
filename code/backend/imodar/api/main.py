@@ -1,20 +1,41 @@
 """FastAPI composition root. Run with: uv run uvicorn imodar.api.main:app"""
 
 import logging
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from functools import lru_cache
 from typing import Annotated
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 
+from ..auth.security import cipher
 from ..engine import Warehouse
 from ..pipeline import Pipeline
+from .auth import require_user
+from .auth import router as auth_router
 from .contracts import AnalysisRequest, AnalysisResponse, HealthResponse, Study
 from .mapping import to_response
 
 logger = logging.getLogger(__name__)
 
-# TODO: add authentication and per-study authorisation before exposing this beyond localhost.
-app = FastAPI(title="IMODAR API", version="0.1.0")
+
+@asynccontextmanager
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    cipher()  # Fail at startup rather than at the first sign-in.
+    yield
+
+
+# TODO: add per-study authorisation; every signed-in user can currently query every study.
+app = FastAPI(title="IMODAR API", version="0.1.0", lifespan=lifespan)
+app.include_router(auth_router)
+
+
+@app.exception_handler(OperationalError)
+def database_unavailable(_: Request, error: OperationalError) -> JSONResponse:
+    logger.error("Application database unavailable", exc_info=error)
+    return JSONResponse({"detail": "The application database is unavailable."}, 503)
 
 
 @lru_cache
@@ -49,7 +70,9 @@ def health() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
-@app.get("/api/studies", responses={503: {"description": "Warehouse unavailable"}})
+@app.get(
+    "/api/studies", dependencies=[Depends(require_user)], responses={503: {"description": "Warehouse unavailable"}}
+)
 def list_studies(warehouse: Annotated[Warehouse, Depends(get_warehouse)]) -> list[Study]:
     """List the studies that contain queryable data."""
     frame = warehouse.query_df(
@@ -60,7 +83,11 @@ def list_studies(warehouse: Annotated[Warehouse, Depends(get_warehouse)]) -> lis
     return [Study.model_validate(row) for row in frame.to_dict("records")]
 
 
-@app.post("/api/analyses", responses={503: {"description": "A dependency is unavailable"}})
+@app.post(
+    "/api/analyses",
+    dependencies=[Depends(require_user)],
+    responses={503: {"description": "A dependency is unavailable"}},
+)
 def create_analysis(request: AnalysisRequest, pipeline: Annotated[Pipeline, Depends(get_pipeline)]) -> AnalysisResponse:
     """Plan, validate, execute and summarise a question."""
     question = request.question.strip()

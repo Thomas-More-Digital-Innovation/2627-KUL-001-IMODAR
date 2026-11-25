@@ -1,6 +1,21 @@
 <script lang="ts">
+  import { page } from '$app/state';
+  import { auth } from '#lib/api/auth.ts';
+  import { messageOf } from '#lib/api/http.ts';
   import { analyses } from '#lib/analyses.svelte.ts';
   let menuOpen = $state(false);
+  let error = $state('');
+  const user = $derived(page.data.user);
+
+  async function logout() {
+    try {
+      await auth.logout();
+      // A full load clears analyses held in memory.
+      window.location.assign('/login');
+    } catch (cause) {
+      error = messageOf(cause);
+    }
+  }
 </script>
 
 <aside>
@@ -24,8 +39,9 @@
   {#if menuOpen}
     <div class="menu" id="user-menu">
       <a href="/settings/profile">Settings</a>
-      <a href="/admin/users">Dashboard</a>
-      <a href="/login">Log out</a>
+      {#if user?.role === 'admin'}<a href="/admin/users">Dashboard</a>{/if}
+      <button onclick={logout}>Log out</button>
+      {#if error}<p role="alert">{error}</p>{/if}
     </div>
   {/if}
   <button
@@ -35,7 +51,7 @@
     onclick={() => (menuOpen = !menuOpen)}
   >
     <img src="/images/avatar.svg" alt="" width="41" height="41" />
-    <span>Researcher<br />researcher@imodar.com</span><b aria-hidden="true">
+    <span>{user?.full_name}<br />{user?.email}</span><b aria-hidden="true">
       {menuOpen ? '↓' : '↑'}
     </b>
   </button>
@@ -101,11 +117,14 @@
     margin-bottom: 5px;
     padding: 5px;
   }
-  .menu a {
+  .menu a,
+  .menu button {
+    text-align: left;
     padding: 5px 13px;
     border-radius: 17px;
   }
-  .menu a:hover {
+  .menu a:hover,
+  .menu button:hover {
     background: #ffffff1f;
   }
   .user {

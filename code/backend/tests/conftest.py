@@ -1,7 +1,20 @@
+import os
+from pathlib import Path
+
 import duckdb
 import pytest
+from alembic import command
+from alembic.config import Config
+from sqlalchemy import create_engine, delete, make_url
+from sqlalchemy.orm import Session
 
+from imodar import config
+from imodar.db.models import User
+from imodar.db.session import get_engine
 from imodar.engine import Warehouse
+
+URL = os.getenv("TEST_DATABASE_URL")
+ALEMBIC = Config(Path(__file__).parent.parent / "alembic.ini")
 
 
 @pytest.fixture
@@ -23,3 +36,31 @@ def warehouse(tmp_path):
     opened = Warehouse(path)
     yield opened
     opened.con.close()
+
+
+@pytest.fixture(scope="session")
+def engine():
+    if not URL:
+        pytest.skip("TEST_DATABASE_URL is not set")
+    # Migrations are rolled all the way back, so a development database must never be the target.
+    assert make_url(URL).database.endswith("_test"), "TEST_DATABASE_URL must name a *_test database"
+    patch = pytest.MonkeyPatch()
+    patch.setattr(config, "DATABASE_URL", URL)
+    get_engine.cache_clear()
+    command.upgrade(ALEMBIC, "head")
+    engine = create_engine(URL)
+    yield engine
+    engine.dispose()
+    command.downgrade(ALEMBIC, "base")
+    get_engine().dispose()
+    get_engine.cache_clear()
+    patch.undo()
+
+
+@pytest.fixture
+def session(engine):
+    with Session(engine) as session:
+        yield session
+        session.rollback()
+        session.execute(delete(User))
+        session.commit()

@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from ..db.models import Role
+
 
 class HealthResponse(BaseModel):
     status: Literal["ok"]
@@ -60,3 +62,37 @@ class AnalysisResponse(BaseModel):
     elapsed_ms: float
     table: ResultTable | None
     audit: AuditTrail
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(max_length=320)
+    password: str = Field(max_length=128)
+    remember: bool = False
+
+
+class LoginResponse(BaseModel):
+    next: Literal["enrol", "verify"]
+
+
+class CodeRequest(BaseModel):
+    code: str = Field(min_length=6, max_length=32, pattern=r"^[0-9A-Za-z -]+$")
+
+
+class EnrolmentResponse(BaseModel):
+    secret: str
+    qr_code: str
+
+
+class RecoveryCodesResponse(BaseModel):
+    recovery_codes: list[str]
+
+
+class CurrentUser(BaseModel):
+    email: str
+    full_name: str
+    role: Role
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(max_length=128)
+    new_password: str = Field(min_length=12, max_length=128)
