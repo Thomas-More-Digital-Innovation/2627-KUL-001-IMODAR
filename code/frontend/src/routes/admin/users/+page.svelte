@@ -1,7 +1,14 @@
 <script lang="ts">
   import Badge from '#lib/components/Badge.svelte';
+  import BulkBar from '#lib/components/BulkBar.svelte';
+  import Button from '#lib/components/Button.svelte';
+  import Card from '#lib/components/Card.svelte';
+  import DataTable from '#lib/components/DataTable.svelte';
   import DemoNotice from '#lib/components/DemoNotice.svelte';
   import Dialog from '#lib/components/Dialog.svelte';
+  import Field from '#lib/components/Field.svelte';
+  import FilterBar from '#lib/components/FilterBar.svelte';
+  import PageHead from '#lib/components/PageHead.svelte';
   import { downloadCsv } from '#lib/csv.ts';
   import { levels, roles, users } from '#lib/demo.ts';
 
@@ -24,10 +31,8 @@
   );
 </script>
 
-<div class="head">
-  <h1>Users</h1>
-  <button
-    class="btn"
+<PageHead title="Users">
+  <Button
     onclick={() =>
       downloadCsv(
         'users.csv',
@@ -36,11 +41,11 @@
       )}
   >
     Export CSV
-  </button>
-  <button class="btn primary" onclick={() => (inviteOpen = true)}>Invite user</button>
-</div>
+  </Button>
+  <Button variant="primary" onclick={() => (inviteOpen = true)}>Invite user</Button>
+</PageHead>
 <DemoNotice />
-<div class="filters">
+<FilterBar>
   <input
     type="search"
     aria-label="Search users"
@@ -64,130 +69,86 @@
   >
     Clear filters
   </button>
-</div>
-{#if selected.length}
-  <div class="bulk">
-    <strong>{selected.length} selected</strong>
-    <button class="link" disabled>Change role</button>
-    <button class="link danger-text" disabled>Deactivate</button>
-    <button onclick={() => (selected = [])}>Clear selection</button>
-  </div>
-{/if}
-<div class="card table">
-  <table>
-    <thead>
-      <tr>
-        <th><span class="visually-hidden">Select</span></th><th>User</th><th>Role</th><th>
-          Status
-        </th><th>Last active</th><th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each visible as user (user.id)}
-        <tr class:selected={selected.includes(user.id)}>
-          <td>
-            <input
-              type="checkbox"
-              aria-label={`Select ${user.email}`}
-              value={user.id}
-              bind:group={selected}
-            />
-          </td>
-          <td>
-            <div class="person">
-              <img src="/images/avatar.svg" alt="" />
-              <div>{user.name}<small>{user.email}</small></div>
-            </div>
-          </td>
-          <td>
-            <select aria-label={`Role of ${user.email}`} value={user.role} disabled>
-              {#each roles as option (option)}<option>{option}</option>{/each}
-            </select>
-          </td>
-          <td><Badge status={user.status} /></td>
-          <td>{user.seen}</td>
-          <td>
-            <button
-              class="btn"
-              onclick={() => {
-                editing = user;
-                editOpen = true;
-              }}
-            >
-              Edit
-            </button>
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
-  <p class="foot">Showing {visible.length} of {users.length} users</p>
-</div>
-<section class="card levels">
-  <h2>Role access levels</h2>
+</FilterBar>
+<BulkBar count={selected.length} onclear={() => (selected = [])}>
+  <Button variant="link" disabled>Change role</Button>
+  <Button variant="danger-link" disabled>Deactivate</Button>
+</BulkBar>
+<DataTable
+  columns={['User', 'Role', 'Status', 'Last active', 'Actions']}
+  summary={`Showing ${visible.length} of ${users.length} users`}
+>
+  {#each visible as user (user.id)}
+    <tr>
+      <td>
+        <input
+          type="checkbox"
+          aria-label={`Select ${user.email}`}
+          value={user.id}
+          bind:group={selected}
+        />
+      </td>
+      <td>
+        <div class="flex items-center gap-[18px] text-[16px] font-semibold">
+          <img src="/images/avatar.svg" alt="" />
+          <div>{user.name}<small>{user.email}</small></div>
+        </div>
+      </td>
+      <td>
+        <select aria-label={`Role of ${user.email}`} value={user.role} disabled>
+          {#each roles as option (option)}<option>{option}</option>{/each}
+        </select>
+      </td>
+      <td><Badge status={user.status} /></td>
+      <td>{user.seen}</td>
+      <td>
+        <Button
+          onclick={() => {
+            editing = user;
+            editOpen = true;
+          }}
+        >
+          Edit
+        </Button>
+      </td>
+    </tr>
+  {/each}
+</DataTable>
+<Card
+  class="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 rounded-2xl px-6 py-5 shadow-[0_1px_3px_#0000001a]"
+>
+  <h2 class="text-[16px] font-bold">Role access levels</h2>
   {#each roles as option (option)}
-    <label class="field">
-      {option}<select value={defaultLevels[option]} disabled>
+    <Field label={option}>
+      <select value={defaultLevels[option]} disabled>
         {#each levels as level (level)}<option value={level}>Level {level}</option>{/each}
       </select>
-    </label>
+    </Field>
   {/each}
-  <p>
+  <p class="col-span-full text-[12px]">
     Users can access published papers at or below their role’s level. Levels 1–6 are available for
     every role.
   </p>
-</section>
+</Card>
 
 <Dialog title="Invite user" bind:open={inviteOpen}>
-  <label class="field">
-    Email address<input type="email" placeholder="colleague@example.com" />
-  </label>
-  <label class="field">
-    Role<select value="Researcher">
+  <Field label="Email address"><input type="email" placeholder="colleague@example.com" /></Field>
+  <Field label="Role">
+    <select value="Researcher">
       {#each roles as option (option)}<option>{option}</option>{/each}
     </select>
-  </label>
-  {#snippet actions()}<button class="btn primary" disabled>Send invitation</button>{/snippet}
+  </Field>
+  {#snippet actions()}<Button variant="primary" disabled>Send invitation</Button>{/snippet}
 </Dialog>
 <Dialog title="Edit user" bind:open={editOpen}>
-  <label class="field">Full name<input value={editing.name} /></label>
-  <label class="field">Email address<input type="email" value={editing.email} /></label>
-  <label class="field">
-    Role<small>Choose the lowest level of access this person needs.</small><select
-      value={editing.role}
-    >
+  <Field label="Full name"><input value={editing.name} /></Field>
+  <Field label="Email address"><input type="email" value={editing.email} /></Field>
+  <Field label="Role" hint="Choose the lowest level of access this person needs.">
+    <select value={editing.role}>
       {#each roles as option (option)}<option>{option}</option>{/each}
     </select>
-  </label>
+  </Field>
   <div>Workspace access <Badge status={editing.status} /></div>
-  <button class="btn" disabled>Deactivate user</button>
-  {#snippet actions()}<button class="btn primary" disabled>Save changes</button>{/snippet}
+  <Button disabled>Deactivate user</Button>
+  {#snippet actions()}<Button variant="primary" disabled>Save changes</Button>{/snippet}
 </Dialog>
-
-<style>
-  .person {
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    font-size: 16px;
-    font-weight: 600;
-  }
-  .person small {
-    font-size: 12px;
-    font-weight: 400;
-  }
-  .levels {
-    display: grid;
-    grid-template-columns: 2fr 1fr 1fr 1fr;
-    gap: 16px;
-    padding: 20px 24px;
-  }
-  h2 {
-    font-size: 16px;
-    font-weight: 700;
-  }
-  .levels p {
-    grid-column: 1 / -1;
-    font-size: 12px;
-  }
-</style>

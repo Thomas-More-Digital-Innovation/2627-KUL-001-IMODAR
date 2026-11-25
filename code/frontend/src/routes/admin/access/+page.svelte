@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Button from '#lib/components/Button.svelte';
+  import Card from '#lib/components/Card.svelte';
   import DemoNotice from '#lib/components/DemoNotice.svelte';
   import { resources, users } from '#lib/demo.ts';
   let search = $state('');
@@ -11,13 +13,23 @@
 </script>
 
 <DemoNotice />
-<section class="card panel">
-  <h1>Users &amp; Resources access</h1>
-  <div class="people">
-    <input type="search" aria-label="Search users" placeholder="Search users" bind:value={search} />
+<Card
+  class="grid min-h-[700px] grid-cols-[327px_1fr] overflow-hidden rounded-[23px] font-sans shadow-[0_1px_3px_#0000001a]"
+>
+  <h1 class="col-span-full h-[76px] border-b border-[#e5eded] p-[22px] text-[26px]">
+    Users &amp; Resources access
+  </h1>
+  <div class="flex flex-col border-r-3 border-[#ededed]">
+    <input
+      class="mx-[7px] mt-[9px] mb-1 h-[50px] rounded-lg border border-[#cacaca] bg-white px-3.5"
+      type="search"
+      aria-label="Search users"
+      placeholder="Search users"
+      bind:value={search}
+    />
     {#each visible as user (user.id)}
       <button
-        class="person"
+        class="flex items-center gap-3 px-[17px] py-2.5 aria-pressed:bg-brand/30"
         aria-label={`${user.name} ${user.email}`}
         aria-pressed={user.id === selectedId}
         onclick={() => (selectedId = user.id)}
@@ -25,92 +37,20 @@
         <img src="/images/avatar.svg" alt="" />{user.name}
       </button>
     {/each}
-    <button class="btn primary add" disabled>Add User +</button>
+    <Button variant="primary" class="mx-2.5 mt-auto mb-2.5" disabled>Add User +</Button>
   </div>
-  <div class="files">
+  <div class="flex flex-col gap-2 p-4">
     {#each resources as resource (resource.name)}
-      <label>
+      <label class="flex h-[74px] items-center gap-4 rounded-xl border border-[#e1e9ea] p-4">
         <input type="checkbox" checked={resource.granted} disabled /><span>
-          {resource.name}<small>{resource.meta}</small>
+          {resource.name}<small class="mt-1 block text-[12px] text-muted">{resource.meta}</small>
         </span>
       </label>
     {/each}
-    <footer>
-      <button class="link danger-text" disabled>Remove user</button>
-      <button class="btn" disabled>Cancel</button>
-      <button class="btn primary" disabled>Save access</button>
+    <footer class="mt-auto flex gap-2 border-t border-[#e5eded] pt-4">
+      <Button variant="danger-link" class="mr-auto" disabled>Remove user</Button>
+      <Button disabled>Cancel</Button>
+      <Button variant="primary" disabled>Save access</Button>
     </footer>
   </div>
-</section>
-
-<style>
-  .panel {
-    display: grid;
-    grid-template-columns: 327px 1fr;
-    min-height: 700px;
-    border-radius: 23px;
-    overflow: hidden;
-    font-family: var(--sans);
-  }
-  h1 {
-    grid-column: 1 / -1;
-    height: 76px;
-    padding: 22px;
-    border-bottom: 1px solid #e5eded;
-    font-size: 26px;
-  }
-  .people {
-    display: flex;
-    flex-direction: column;
-    border-right: 3px solid #ededed;
-  }
-  .people input {
-    height: 50px;
-    margin: 9px 7px 4px;
-    padding: 0 14px;
-    border: 1px solid #cacaca;
-    border-radius: 8px;
-  }
-  .person {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 17px;
-  }
-  .person[aria-pressed='true'] {
-    background: #0b71814d;
-  }
-  .add {
-    margin: auto 10px 10px;
-  }
-  .files {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    padding: 16px;
-  }
-  .files label {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    height: 74px;
-    padding: 16px;
-    border: 1px solid #e1e9ea;
-    border-radius: 12px;
-  }
-  small {
-    display: block;
-    margin-top: 4px;
-    color: var(--muted);
-  }
-  footer {
-    display: flex;
-    gap: 8px;
-    margin-top: auto;
-    padding-top: 16px;
-    border-top: 1px solid #e5eded;
-  }
-  footer .link {
-    margin-right: auto;
-  }
-</style>
+</Card>

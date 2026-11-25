@@ -1,4 +1,6 @@
 <script lang="ts">
+  import Logo from '#lib/components/Logo.svelte';
+  import MaskIcon from '#lib/components/MaskIcon.svelte';
   import { page } from '$app/state';
   import type { LayoutProps } from './$types';
   let { children }: LayoutProps = $props();
@@ -8,63 +10,25 @@
   ];
 </script>
 
-<header><a href="/">← Back to workspace</a><span class="logo">IMODAR</span></header>
-<div class="layout">
-  <nav aria-label="Settings">
+<header
+  class="flex min-h-[59px] items-center justify-between border border-[#adadad] bg-white pr-[17px] pl-[29px] text-[23.7px] text-brand shadow-[0_4px_25px_#0000001a]"
+>
+  <a href="/">← Back to workspace</a><Logo />
+</header>
+<div class="grid grid-cols-[minmax(200px,343px)_minmax(0,950px)] gap-[29px] px-[54px] py-[68px]">
+  <nav
+    class="grid gap-2 self-start rounded-2xl border border-[#adadad] bg-[#fffbfb] p-[11px] text-[26.5px]"
+    aria-label="Settings"
+  >
     {#each links as link (link.href)}
-      <a href={link.href} aria-current={page.url.pathname === link.href ? 'page' : undefined}>
-        <span class="icon" style:mask-image={`url(/images/${link.icon}.svg)`}></span>{link.label}
+      <a
+        class="flex h-[54px] items-center gap-3.5 rounded-lg px-2.5 text-[#4e4e4e] aria-[current]:bg-brand/30 aria-[current]:text-brand"
+        href={link.href}
+        aria-current={page.url.pathname === link.href ? 'page' : undefined}
+      >
+        <MaskIcon name={link.icon} class="size-[35px]" />{link.label}
       </a>
     {/each}
   </nav>
   <main>{@render children()}</main>
 </div>
-
-<style>
-  header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 59px;
-    padding: 0 17px 0 29px;
-    border: 1px solid #adadad;
-    background: #fff;
-    color: var(--brand);
-    font-size: 23.7px;
-    box-shadow: 0 4px 25px #0000001a;
-  }
-  .layout {
-    display: grid;
-    grid-template-columns: minmax(200px, 343px) minmax(0, 950px);
-    gap: 29px;
-    padding: 68px 54px;
-  }
-  nav {
-    align-self: start;
-    display: grid;
-    gap: 8px;
-    padding: 11px;
-    border: 1px solid #adadad;
-    border-radius: 16px;
-    background: #fffbfb;
-    font-size: 26.5px;
-  }
-  nav a {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    height: 54px;
-    padding: 0 10px;
-    border-radius: 8px;
-    color: #4e4e4e;
-  }
-  nav a[aria-current] {
-    background: #0b71814d;
-    color: var(--brand);
-  }
-  .icon {
-    width: 35px;
-    height: 35px;
-    background: currentColor;
-  }
-</style>

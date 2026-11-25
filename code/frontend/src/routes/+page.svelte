@@ -1,5 +1,6 @@
 <script lang="ts">
   import { analyses } from '#lib/analyses.svelte.ts';
+  import Notice from '#lib/components/Notice.svelte';
   import ResultCard from '#lib/components/ResultCard.svelte';
   import Sidebar from '#lib/components/Sidebar.svelte';
   let question = $state('');
@@ -10,22 +11,32 @@
   }
 </script>
 
-<div class="layout">
+<div class="flex h-screen">
   <Sidebar />
-  <main>
-    <header><h1>{analyses.active?.title ?? 'New analysis'}</h1></header>
-    <div class="results">
+  <main class="flex min-w-0 flex-1 flex-col">
+    <header class="min-h-[72px] border border-[#adadad] bg-white px-[22px] py-5">
+      <h1 class="truncate text-[26.5px]">{analyses.active?.title ?? 'New analysis'}</h1>
+    </header>
+    <div
+      class="flex flex-1 flex-col gap-[25px] overflow-y-auto pt-[58px] pr-[25px] pb-[25px] pl-[19px]"
+    >
       {#each analyses.active?.results ?? [] as result, index (index)}<ResultCard {result} />{/each}
       {#if !analyses.active && !analyses.pending}
-        <p class="empty">Ask a clinical question across your studies to start an analysis.</p>
+        <p class="m-auto text-[18px] text-body">
+          Ask a clinical question across your studies to start an analysis.
+        </p>
       {/if}
       {#if analyses.pending}<p role="status">
           {analyses.think ? 'Thinking about' : 'Analysing'} “{analyses.pending}”…
         </p>{/if}
-      {#if analyses.error}<p class="notice" role="alert">{analyses.error}</p>{/if}
+      {#if analyses.error}<Notice role="alert">{analyses.error}</Notice>{/if}
     </div>
-    <form onsubmit={submit}>
+    <form
+      class="mx-[50px] my-3.5 flex gap-2 rounded-2xl border border-[#cedbdd] bg-white p-2 shadow-[0_12px_35px_#143e451f] has-[textarea:focus-visible]:outline-2 has-[textarea:focus-visible]:outline-link"
+      onsubmit={submit}
+    >
       <textarea
+        class="min-w-0 flex-1 resize-none p-3 outline-none"
         rows="1"
         maxlength="2000"
         aria-label="Ask a question"
@@ -37,7 +48,7 @@
         }}></textarea>
       <button
         type="button"
-        class="think"
+        class="rounded-xl border border-field px-3.5 text-body aria-pressed:border-brand aria-pressed:bg-tint aria-pressed:text-brand"
         aria-pressed={analyses.think}
         title="Slower, but better on hard questions"
         disabled={!!analyses.pending}
@@ -46,7 +57,7 @@
         Thinking
       </button>
       <button
-        class="send"
+        class="grid size-11 place-items-center rounded-xl bg-action"
         aria-label="Submit question"
         disabled={!!analyses.pending || !question.trim()}
       >
@@ -55,77 +66,3 @@
     </form>
   </main>
 </div>
-
-<style>
-  .layout {
-    display: flex;
-    height: 100vh;
-  }
-  main {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    min-width: 0;
-  }
-  header {
-    min-height: 72px;
-    padding: 20px 22px;
-    border: 1px solid #adadad;
-    background: #fff;
-  }
-  h1 {
-    overflow: hidden;
-    font-size: 26.5px;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .results {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    gap: 25px;
-    padding: 58px 25px 25px 19px;
-    overflow-y: auto;
-  }
-  .empty {
-    margin: auto;
-    color: var(--body);
-    font-size: 18px;
-  }
-  form {
-    display: flex;
-    gap: 8px;
-    margin: 14px 50px;
-    padding: 8px;
-    border: 1px solid #cedbdd;
-    border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 12px 35px #143e451f;
-  }
-  textarea {
-    flex: 1;
-    min-width: 0;
-    padding: 12px;
-    border: 0;
-    resize: none;
-  }
-  .think {
-    padding: 0 14px;
-    border: 1px solid var(--field);
-    border-radius: 12px;
-    color: var(--body);
-  }
-  .think[aria-pressed='true'] {
-    border-color: var(--brand);
-    background: var(--tint);
-    color: var(--brand);
-  }
-  .send {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: var(--action);
-  }
-</style>
