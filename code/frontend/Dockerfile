@@ -1,16 +1,16 @@
-FROM node:24-slim AS build
+FROM node:25-slim AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 COPY . .
 RUN npx svelte-kit sync && npm run build
 
-FROM node:24-slim AS deps
+FROM node:25-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts
 
-FROM node:24-slim
+FROM node:25-slim
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package.json ./
