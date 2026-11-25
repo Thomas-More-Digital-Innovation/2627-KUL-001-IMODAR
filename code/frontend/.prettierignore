@@ -1,0 +1,6 @@
+src/lib/api/schema.ts
+package-lock.json
+.svelte-kit
+build
+test-results
+playwright-report
