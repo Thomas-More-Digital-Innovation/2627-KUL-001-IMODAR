@@ -30,6 +30,7 @@ class Synthesizer:
         df: pd.DataFrame | None,
         total_rows: int,
         max_rows_for_prompt: int = config.SYNTH_MAX_ROWS,
+        think: bool | None = None,
     ) -> str:
         if df is None or len(df) == 0:
             return "No matching records were found in the warehouse for this query."
@@ -66,6 +67,6 @@ Summarize the key facts answering the question based strictly and exclusively on
         ]
 
         try:
-            return self.llm.chat(messages, temperature=0.0)
+            return self.llm.chat(messages, temperature=0.0, think=think)
         except RuntimeError:
             return "(Could not generate synthesis prose. Please inspect the raw data table below.)"
