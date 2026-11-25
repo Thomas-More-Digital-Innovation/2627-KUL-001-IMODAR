@@ -1,0 +1,29 @@
+# cp ingress.example.yaml ingress.yaml (git-ignored, so the host stays private), fill it in, then kubectl apply -f ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: imodar
+  namespace: imodar
+  annotations:
+    cert-manager.io/cluster-issuer: "<CLUSTER_ISSUER>"
+    # For ingress-nginx; other controllers need their own equivalent. An analysis can take 30 minutes.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "1800"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "1800"
+spec:
+  ingressClassName: "<INGRESS_CLASS>"
+  rules:
+    - host: "<HOST>"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  name: http
+  # The session cookie is Secure, so sign-in requires HTTPS.
+  tls:
+    - hosts:
+        - "<HOST>"
+      secretName: imodar-tls

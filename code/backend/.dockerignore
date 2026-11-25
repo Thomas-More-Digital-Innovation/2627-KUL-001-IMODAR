@@ -1,0 +1,9 @@
+# Allowlist: the warehouse and .env must never reach a public image.
+*
+!pyproject.toml
+!uv.lock
+!alembic.ini
+!migrations
+!imodar
+**/__pycache__
+**/.env*

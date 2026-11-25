@@ -1,0 +1,80 @@
+name: Build & Deploy Image
+
+on:
+  workflow_call:
+    inputs:
+      component:
+        description: Folder under code/ that holds the Dockerfile; also the image name
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/thomas-more-digital-innovation/2627-kul-001-imodar/${{ inputs.component }}
+
+jobs:
+  build-and-push:
+    name: Build & Push Image
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: code/${{ inputs.component }}
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ github.sha }}
+            ${{ env.IMAGE }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=${{ inputs.component }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.component }}
+
+  update-manifest:
+    name: Point Argo CD at the new image
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+
+      # Pushes made with GITHUB_TOKEN never trigger workflows, so this cannot loop.
+      - name: Commit image tag
+        env:
+          COMPONENT: ${{ inputs.component }}
+          TAG: ${{ github.sha }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Frontend and backend may push at the same time: redo the edit on the latest main.
+          for _ in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            yq -i '(.images[] | select(.name == strenv(IMAGE))).newTag = strenv(TAG)' k8s/app/kustomization.yaml
+            git diff --quiet && exit 0
+            git commit -am "deploy: ${COMPONENT} ${TAG::7}"
+            git push origin HEAD:main && exit 0
+            sleep 3
+          done
+          exit 1

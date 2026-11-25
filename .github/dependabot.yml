@@ -78,3 +78,25 @@ updates:
       docker:
         patterns:
           - "*"
+
+  # Dockerfiles and Kubernetes manifests
+  - package-ecosystem: "docker"
+    directories:
+      - "/code/backend"
+      - "/code/frontend"
+      - "/k8s/app"
+    schedule:
+      interval: "daily"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 10
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: "chore(docker)"
+    ignore:
+      # A Postgres major upgrade needs a manual data migration.
+      - dependency-name: "postgres"
+        update-types: ["version-update:semver-major"]
+      # Deployed by the CD workflows.
+      - dependency-name: "thomas-more-digital-innovation/*"

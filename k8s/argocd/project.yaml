@@ -1,0 +1,18 @@
+# Limits what this repository can deploy: namespaced resources in imodar only.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: imodar
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1"
+spec:
+  sourceRepos:
+    - https://github.com/Thomas-More-Digital-Innovation/2627-KUL-001-IMODAR.git
+  destinations:
+    - server: https://kubernetes.default.svc
+      namespace: imodar
+  clusterResourceWhitelist: []
+  namespaceResourceBlacklist:
+    - group: ""
+      kind: Secret

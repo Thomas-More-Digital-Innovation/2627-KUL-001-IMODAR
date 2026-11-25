@@ -1,0 +1,28 @@
+name: Backend CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "code/backend/**"
+      - ".github/workflows/cd-backend.yml"
+      - ".github/workflows/cd-image.yml"
+      - "!code/backend/**/*.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-backend
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Backend
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/cd-image.yml
+    with:
+      component: backend
