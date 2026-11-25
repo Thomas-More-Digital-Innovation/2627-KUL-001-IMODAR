@@ -9,8 +9,11 @@ from pathlib import Path
 
 import duckdb
 import pandas as pd
+from sqlglot import exp, parse_one
+from sqlglot.errors import ParseError
 
 from . import config
+from .guard import DIALECT
 
 QUERYABLE_SCHEMAS = ("omop", "genomics", "catalog", "imaging")
 # Columns whose distinct values are listed in the planner prompt (if few enough).
@@ -30,6 +33,11 @@ PROFILE_SKIP = (
     "concept_synonym_name",
     "age_basis",
 )
+
+
+def _count_query(query: exp.Query) -> str:
+    """Count a query's rows; built as a syntax tree so no SQL text is concatenated."""
+    return exp.select(exp.Count(this=exp.Star())).from_(query.subquery("counted")).sql(dialect=DIALECT)
 
 
 @dataclass
@@ -91,14 +99,13 @@ class Warehouse:
                 for c, ty in cols.items():
                     if ty != "VARCHAR" or any(k in c for k in PROFILE_SKIP) or c.endswith("_id"):
                         continue
-                    n = cur.execute(f'SELECT count(DISTINCT "{c}") FROM {s}.{t}').fetchone()[0]
+                    column = exp.column(c, quoted=True)
+                    table = exp.table_(t, db=s, quoted=True)
+                    distinct = exp.select(column).distinct().from_(table).where(column.is_(exp.null()).not_())
+                    n = cur.execute(_count_query(distinct)).fetchone()[0]
                     if 0 < n <= max_distinct:
-                        vals = [
-                            r[0]
-                            for r in cur.execute(
-                                f'SELECT DISTINCT "{c}" FROM {s}.{t} WHERE "{c}" IS NOT NULL ORDER BY 1'
-                            ).fetchall()
-                        ]
+                        listing = distinct.order_by(column).sql(dialect=DIALECT)
+                        vals = [r[0] for r in cur.execute(listing).fetchall()]
                         prof[f"{s}.{t}.{c}"] = vals
         return prof
 
@@ -126,10 +133,10 @@ class Warehouse:
             res.returned_rows = len(rows)
             res.row_count = len(rows)
             if res.truncated:  # exact total, computed separately (logged as such)
-                res.row_count = cur.execute(f"SELECT count(*) FROM ({sql.rstrip(';')})").fetchone()[0]
+                res.row_count = cur.execute(_count_query(parse_one(sql, dialect=DIALECT))).fetchone()[0]
         except duckdb.InterruptException:
             res.error = f"Query exceeded timeout of {timeout_s:.0f}s and was cancelled."
-        except duckdb.Error as e:
+        except (duckdb.Error, ParseError) as e:
             res.error = f"{type(e).__name__}: {e}"
         finally:
             timer.cancel()

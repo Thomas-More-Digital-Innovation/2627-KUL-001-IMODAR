@@ -1,5 +1,7 @@
+import duckdb
 import pytest
 
+from imodar.engine import Warehouse
 from imodar.guard import validate
 
 
@@ -32,6 +34,32 @@ def test_engine_is_read_only(warehouse):
 def test_engine_limits_rows_but_reports_total(warehouse):
     result = warehouse.execute("SELECT * FROM omop.person", max_rows=1)
     assert (result.returned_rows, result.row_count, result.truncated) == (1, 2, True)
+
+
+@pytest.mark.parametrize(
+    "sql",
+    [
+        "SELECT * FROM omop.person;",
+        "SELECT * FROM omop.person -- trailing comment",
+        "WITH p AS (SELECT * FROM omop.person) SELECT * FROM p ORDER BY 1",
+        "SELECT 1 AS a UNION ALL SELECT 2",
+        "SELECT person_id, person_id FROM omop.person",
+    ],
+)
+def test_truncated_total_is_exact(warehouse, sql):
+    result = warehouse.execute(sql, max_rows=1)
+    assert (result.error, result.row_count) == (None, 2)
+
+
+def test_value_profile_quotes_identifiers(tmp_path):
+    path = tmp_path / "odd.duckdb"
+    with duckdb.connect(str(path)) as connection:
+        connection.execute("CREATE SCHEMA omop")
+        connection.execute("""CREATE TABLE omop."order" ("odd ""name" VARCHAR)""")
+        connection.execute("""INSERT INTO omop."order" VALUES ('b'), ('a'), ('a'), (NULL)""")
+    opened = Warehouse(path)
+    assert opened.value_profile() == {'omop.order.odd "name': ["a", "b"]}
+    opened.con.close()
 
 
 def test_engine_times_out(warehouse):
