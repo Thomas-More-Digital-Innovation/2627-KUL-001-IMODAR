@@ -19,7 +19,7 @@ services:
 
   qdrant:
     # Host port 6335: the PoC already publishes 6333 and 6334.
-    image: qdrant/qdrant:v1.19.2
+    image: qdrant/qdrant:v1.20.2
     restart: unless-stopped
     ports:
       - "127.0.0.1:6335:6333"
